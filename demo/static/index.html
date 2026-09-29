@@ -190,6 +190,12 @@ const $ = id => document.getElementById(id);
 const PAN = /\b(?:\d[ -]?){12,18}\d\b/g;
 const TOK = /tok_\d{4}_[0-9a-f]{6}_\d{4}/g;
 let MODEL_NAME = { mock: "mock (always obeys)" };
+// Short model name for the step tags: the family from the label ("qwen3-30b-a3b" -> "Qwen"), not the config key.
+const FAMILIES = { qwen: "Qwen", glm: "GLM", gpt: "GPT", claude: "Claude", llama: "Llama", kimi: "Kimi", deepseek: "DeepSeek", gemini: "Gemini", mistral: "Mistral", grok: "Grok" };
+const shortModel = key => {
+  const m = String(MODEL_NAME[key] || key).match(new RegExp(Object.keys(FAMILIES).join("|"), "i"));
+  return (m ? FAMILIES[m[0].toLowerCase()] : key) + (key === "crusoe" ? " · Crusoe" : "");
+};
 const available = s => !s.action || s.action.kind === "eval" || (s.action.model || "mock") in MODEL_NAME;
 let script = { steps: [] }, tickets = {}, cur = 0, since = 0, runId = 0, running = false, events = [];
 
@@ -385,7 +391,7 @@ $("prev").onclick = () => go(cur - 1); $("next").onclick = () => go(cur + 1); $(
   $("title").textContent = script.title;
   MODEL_NAME = script.models || MODEL_NAME;
   $("steps").innerHTML = script.steps.map((s, i) => {
-    const a = s.action, m = a?.model && a.model !== "mock" ? " · " + a.model : "";
+    const a = s.action, m = a?.model && a.model !== "mock" ? " · " + shortModel(a.model) : "";
     const tag = !a ? "" : !available(s) ? "n/a here" : a.kind === "eval" ? "eval" : (a.kind === "contained" ? "kavach" : "open") + m;
     return `<li class="${available(s) ? "" : "na"}"><button data-i="${i}">${esc(s.title)}<span class="tag">${tag}</span></button></li>`;
   }).join("");
