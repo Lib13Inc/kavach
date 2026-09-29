@@ -142,7 +142,7 @@ footer .inner {{ max-width: 1120px; margin: 0 auto; padding: 24px 16px; display:
 <body>
 <header class="hero">
   <div class="hero-inner">
-    <span class="eyebrow">Kavach · Pitch &amp; Spec</span>
+    <span class="eyebrow">Kavach · Open source · Pitch &amp; Spec</span>
     <h1>{title}</h1>
     <p>A drop-in runtime that wraps any agent in a sandbox, a policy gateway, a secrets vault, an eval harness and a goal tracker. You get all five from one config file and one command.</p>
     <div class="actions">

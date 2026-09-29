@@ -62,6 +62,17 @@ p { margin: 0 0 14px; }
 .row { display: flex; gap: 24px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+/* dockerfile analogy */
+.analogy { display: grid; grid-template-columns: 1fr 1.35fr 1fr; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--card); }
+.analogy > div { padding: 6px 16px; line-height: 1.4; border-top: 1px solid var(--border); font-size: 15.5px; }
+.analogy > .h { border-top: 0; background: var(--row, var(--surface)); font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.analogy code { font-size: 14.5px; }
+.analogy .d code { color: var(--muted); }
+.analogy .kv { background: var(--accent-soft); }
+.analogy .kv code { color: var(--accent); font-weight: 500; }
+.analogy .w { color: var(--muted); }
+.oss { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--accent); color: var(--accent); background: var(--accent-soft); white-space: nowrap; flex-shrink: 0; }
 .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
 .card p { font-size: 17px; color: var(--muted); margin: 0; }
@@ -170,6 +181,9 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   h1 { font-size: 40px; } h2 { font-size: 28px; margin-bottom: 18px; }
   .section-slide .big { font-size: 80px; } .section-slide h1 { font-size: 36px; }
   .lede { font-size: 18px; }
+  .analogy { grid-template-columns: 1fr; }
+  .analogy > .h { display: none; }
+  .analogy > div:nth-child(3n+1) { border-top: 2px solid var(--border); }
   .grid2, .grid3, .grid5, .market, .steps, .flow { grid-template-columns: 1fr; }
   .flow .arrow { transform: rotate(90deg); height: 40px; }
   .row { flex-direction: column; }
@@ -198,7 +212,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <p class="kicker">Kavach · कवच · "armor"</p>
   <h1>The model is not the<br><span>security boundary.</span></h1>
   <p class="lede">Kavach wraps any AI agent in a sandbox, a policy gateway and a secrets vault, from one config file and one command.</p>
-  <div class="meta"><span>Vaibhav Bhandari · Lib13</span><span>Hackathon demo · Sep 29, 2026</span><span>kavach.lib13.com</span></div>
+  <div class="meta"><span class="oss">Open source</span><span>Vaibhav Bhandari · Lib13</span><span>Hackathon demo · Sep 29, 2026</span><span>kavach.lib13.com</span></div>
 </section>
 
 <!-- 2 · Section: problem -->
@@ -304,6 +318,27 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="foot"><span>Kavach</span><span>Tech stack</span></div>
 </section>
 
+<!-- 8a · The policy file -->
+<section class="slide">
+  <p class="kicker">The big idea</p>
+  <h2 style="margin-bottom:10px">The policy file is the Dockerfile for agent safety</h2>
+  <p class="muted" style="font-size:18px;margin-bottom:14px;line-height:1.45">Dockerfiles turned "works on my machine" into a file any team could ship. Kavach turns a platform team's worth of containment into a file a 10-person startup can review in a pull request.</p>
+  <div class="analogy">
+    <div class="h">Dockerfile</div><div class="h">Kavach policy · payments.yaml</div><div class="h">What a small team gets</div>
+    <div class="d"><code>FROM python:3.12-slim</code></div><div class="kv"><code>pack: payments@0.1</code></div><div class="w">Start from a vetted pack, not a blank page</div>
+    <div class="d"><code>EXPOSE 8080</code></div><div class="kv"><code>egress.allow_hosts: [payments.internal, …]</code></div><div class="w">Declare what the agent may talk to; everything else is 403</div>
+    <div class="d"><code>ENV API_KEY=sk-live-…</code></div><div class="kv"><code>secrets: {standin: sk-kavach-standin-*}</code></div><div class="w">Better than ENV: the real key never enters the box</div>
+    <div class="d"><code>—</code></div><div class="kv"><code>cardholder_data.release_to: [payments.internal]</code></div><div class="w">Cards become tokens; real only at the processor</div>
+    <div class="d"><code>HEALTHCHECK …</code></div><div class="kv"><code>evals.gate: real_pans_at_attacker: 0</code></div><div class="w">Ship only if the attack suite is clean</div>
+    <div class="d"><code>docker run app</code></div><div class="kv"><code>kavach run --policy payments.yaml -- ./agent</code></div><div class="w">One command, any model, no agent code changes</div>
+  </div>
+  <div class="row" style="margin-top:14px;align-items:center;gap:18px">
+    <span class="oss">Open source</span>
+    <span class="muted" style="font-size:17px"><strong style="color:var(--text)">34 lines of YAML</strong> replace a sandbox, a TLS gateway, a vault, an eBPF guard and an eval gate. Runtime, gateway, vault and baseline packs are open source; vertical packs are what a team adds.</span>
+  </div>
+  <div class="foot"><span>Kavach</span><span>Tech stack · the policy file</span></div>
+</section>
+
 <!-- 8 · Architecture -->
 <section class="slide">
   <p class="kicker">Architecture</p>
@@ -404,7 +439,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
 <!-- 13 · Code: policy -->
 <section class="slide">
   <p class="kicker">Code · 1 of 4</p>
-  <h2>One policy file drives the gateway, the vault and the eval gate</h2>
+  <h2>The Dockerfile for agents, line by line</h2>
   <div class="row grow">
     <div style="flex:1.25">
       <p class="file">policy/payments.yaml</p>
@@ -541,11 +576,11 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
 
 <!-- 17 · Close -->
 <section class="slide title-slide">
-  <p class="kicker">What's next</p>
+  <p class="kicker">Open source · what's next</p>
   <h1>One config file.<br><span>One command.</span></h1>
-  <p class="lede">Next: Firecracker microVM per session, a Rust gateway, and policy packs for mental-health chat, K-12 tutoring and payments. We're looking for design partners in healthcare, education and fintech.</p>
+  <p class="lede">Next: Firecracker microVM per session, a Rust gateway, and policy packs for mental-health chat, K-12 tutoring and payments. The core is open source: clone it, write a policy file, run your agent inside it. We're looking for design partners in healthcare, education and fintech.</p>
   <div class="row" style="margin-top:36px;flex-wrap:wrap">
-    <a class="btn" href="https://github.com/Lib13Inc/kavach" rel="noopener">github.com/Lib13Inc/kavach</a>
+    <a class="btn" href="https://github.com/Lib13Inc/kavach" rel="noopener">Star it on GitHub · Lib13Inc/kavach</a>
     <a class="btn ghost" href="../">Read the full pitch &amp; spec</a>
   </div>
   <div class="meta"><span>Thank you · Vaibhav Bhandari · Lib13</span></div>
