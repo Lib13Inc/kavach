@@ -86,3 +86,7 @@ tokens. Use test card numbers only.
 - Approval gate: refunds over `approvals.refund_over_usd` wait for a click in the trace view.
 - Firecracker instead of Docker for the agent (needs `/dev/kvm`; AWS C8i/M8i/R8i work).
 - Crisis guardrail and memoir faithfulness packs (see SPEC.md).
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

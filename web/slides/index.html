@@ -212,7 +212,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <p class="kicker">Kavach · कवच · "armor"</p>
   <h1>The model is not the<br><span>security boundary.</span></h1>
   <p class="lede">Kavach wraps any AI agent in a sandbox, a policy gateway and a secrets vault, from one config file and one command.</p>
-  <div class="meta"><span class="oss">Open source</span><span>Vaibhav Bhandari · Lib13</span><span>Hackathon demo · Sep 29, 2026</span><span>kavach.lib13.com</span></div>
+  <div class="meta"><span class="oss">Open source</span><span>Team Kavach</span><span>Hackathon demo · Sep 29, 2026</span><span>kavach.lib13.com</span></div>
 </section>
 
 <!-- 2 · Section: problem -->
@@ -220,7 +220,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="big">01</div>
   <h1>The problem</h1>
   <p class="lede">Agents are reaching customers, card numbers and patient records faster than the safety layer around them is being built.</p>
-  <div class="foot"><span>Kavach</span><span>The problem</span></div>
+  <div class="foot"><span>Team Kavach</span><span>The problem</span></div>
 </section>
 
 <!-- 3 · The attack -->
@@ -241,7 +241,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
       <p><strong>Prompt-level defenses are probabilistic.</strong> Frontier models refuse obvious injections <em>more often</em>. Containment is for the run where the model doesn't refuse.</p>
     </div>
   </div>
-  <div class="foot"><span>Kavach</span><span>The problem</span></div>
+  <div class="foot"><span>Team Kavach</span><span>The problem</span></div>
 </section>
 
 <!-- 4 · Why it matters -->
@@ -259,7 +259,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <div class="side"><p><strong>Big companies</strong> absorb this with platform teams. A 10-person digital-health startup, a tutoring company or a fintech does not have one. So the controls are skipped, half-built, or bolted on after an incident.</p></div>
     <div class="side"><p><strong>The stakes are regulated.</strong> One leaked PAN pulls the whole agent runtime into PCI scope. One missed crisis in a mental-health chat is existential. Today's tools cover one or two layers, mostly for coding agents on laptops.</p></div>
   </div>
-  <div class="foot"><span>Kavach</span><span>The problem</span></div>
+  <div class="foot"><span>Team Kavach</span><span>The problem</span></div>
 </section>
 
 <!-- 5 · Market -->
@@ -288,7 +288,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
       <p><strong>What's still open:</strong> runtime containment plus a data vault, packaged for the small team shipping a customer-facing agent. That's Kavach.</p>
     </div>
   </div>
-  <div class="foot"><span>Kavach</span><span>The problem · market</span></div>
+  <div class="foot"><span>Team Kavach</span><span>The problem · market</span></div>
 </section>
 
 <!-- 6 · The gap -->
@@ -307,7 +307,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </tbody>
   </table>
   </div>
-  <div class="foot"><span>Kavach</span><span>The problem · the gap</span></div>
+  <div class="foot"><span>Team Kavach</span><span>The problem · the gap</span></div>
 </section>
 
 <!-- 7 · Section: stack -->
@@ -315,7 +315,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="big">02</div>
   <h1>The tech stack</h1>
   <p class="lede">Contain the process and its network, not the SDK. That is what makes Kavach work with any model and any framework.</p>
-  <div class="foot"><span>Kavach</span><span>Tech stack</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack</span></div>
 </section>
 
 <!-- 8a · The policy file -->
@@ -336,7 +336,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <span class="oss">Open source</span>
     <span class="muted" style="font-size:17px"><strong style="color:var(--text)">34 lines of YAML</strong> replace a sandbox, a TLS gateway, a vault, an eBPF guard and an eval gate. Runtime, gateway, vault and baseline packs are open source; vertical packs are what a team adds.</span>
   </div>
-  <div class="foot"><span>Kavach</span><span>Tech stack · the policy file</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack · the policy file</span></div>
 </section>
 
 <!-- 8 · Architecture -->
@@ -360,7 +360,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
     <div class="box ebpf"><b>eBPF guard on the host</b> <span class="muted">· watches <code class="i">connect()</code> from the agent's cgroup · anything not to the proxy or DNS is logged and the process is killed</span></div>
   </div>
-  <div class="foot"><span>Kavach</span><span>Tech stack · architecture</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack · architecture</span></div>
 </section>
 
 <!-- 9 · Stack table -->
@@ -382,7 +382,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </tbody>
   </table>
   </div>
-  <div class="foot"><span>Kavach</span><span>Tech stack</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack</span></div>
 </section>
 
 <!-- 10 · Section: demo -->
@@ -390,7 +390,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="big">03</div>
   <h1>Live demo + code</h1>
   <p class="lede">"Steal the card": the same agent, the same ticket, the same model. The only change is <code class="i">kavach run</code>.</p>
-  <div class="foot"><span>Kavach</span><span>Live demo</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
 </section>
 
 <!-- 11 · Run of show -->
@@ -409,7 +409,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <a class="btn" href="https://kavach-demo.bettong-beta.ts.net/" rel="noopener">Open the live demo →</a>
     <span class="muted" style="font-size:15px">Tailnet only. Offline fallback: <code class="i">bin/kavach demo --ticket 2</code></span>
   </div>
-  <div class="foot"><span>Kavach</span><span>Live demo</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
 </section>
 
 <!-- 12 · Before / after -->
@@ -433,7 +433,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
   </div>
   <p class="muted" style="margin-top:24px;font-size:18px">The agent's code didn't change. The model didn't change. The agent still <em>tried</em> to exfiltrate; it just had nothing worth stealing and nowhere to send it.</p>
-  <div class="foot"><span>Kavach</span><span>Live demo</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
 </section>
 
 <!-- 13 · Code: policy -->
@@ -467,7 +467,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
       <p><strong>The gate is in the policy.</strong> Zero PANs at the attacker, zero in the agent's context, and the legitimate refund must still go through.</p>
     </div>
   </div>
-  <div class="foot"><span>Kavach</span><span>Code · policy</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Code · policy</span></div>
 </section>
 
 <!-- 14 · Code: gateway -->
@@ -500,7 +500,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
       <p><strong>Model providers never see a card</strong> either, which keeps the agent runtime out of PCI scope.</p>
     </div>
   </div>
-  <div class="foot"><span>Kavach</span><span>Code · gateway</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Code · gateway</span></div>
 </section>
 
 <!-- 15 · Code: vault + eBPF -->
@@ -541,7 +541,7 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
     </div>
   </div>
   <p class="muted" style="font-size:16px;margin-top:14px">Format-preserving tokens keep first-4 / last-4, so receipts and logs still make sense to a human.</p>
-  <div class="foot"><span>Kavach</span><span>Code · vault + eBPF</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Code · vault + eBPF</span></div>
 </section>
 
 <!-- 16 · Code: eval gate -->
@@ -571,7 +571,7 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
       <p><strong>Model or prompt change?</strong> CI re-runs the suite and blocks the release on any leak.</p>
     </div>
   </div>
-  <div class="foot"><span>Kavach</span><span>Code · evals</span></div>
+  <div class="foot"><span>Team Kavach</span><span>Code · evals</span></div>
 </section>
 
 <!-- 17 · Close -->
@@ -583,7 +583,7 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
     <a class="btn" href="https://github.com/Lib13Inc/kavach" rel="noopener">Star it on GitHub · Lib13Inc/kavach</a>
     <a class="btn ghost" href="../">Read the full pitch &amp; spec</a>
   </div>
-  <div class="meta"><span>Thank you · Vaibhav Bhandari · Lib13</span></div>
+  <div class="meta"><span>Thank you · Team Kavach</span></div>
 </section>
 
 </main>

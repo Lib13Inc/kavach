@@ -159,7 +159,7 @@ footer .inner {{ max-width: 1120px; margin: 0 auto; padding: 24px 16px; display:
 {content}
   </article>
 </div>
-<footer><div class="inner"><span>Kavach · Lib13</span><a href="{repo_url}" rel="noopener">github.com/Lib13Inc/kavach</a></div></footer>
+<footer><div class="inner"><span>Team Kavach · open source, <a href="{repo_url}/blob/main/LICENSE" rel="noopener">Apache-2.0</a></span><a href="{repo_url}" rel="noopener">github.com/Lib13Inc/kavach</a></div></footer>
 </body>
 </html>
 """
