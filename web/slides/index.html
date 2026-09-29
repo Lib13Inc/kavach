@@ -80,6 +80,43 @@ p { margin: 0 0 14px; }
 .verbs { display: grid; gap: 12px; }
 .verbs .card { padding: 14px 18px; }
 .verbs code.v { font: 700 17px "JetBrains Mono", monospace; color: var(--accent); }
+/* roadmap */
+.close { background: radial-gradient(900px 500px at 100% 0%, var(--accent-soft), transparent 70%), var(--surface); }
+.roadmap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.phase { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.phase:first-child { border: 2px solid var(--accent); }
+.phase .when { font: 600 13px "JetBrains Mono", monospace; color: var(--muted); }
+.phase h3 { margin: 4px 0 6px; font-size: 21px; }
+.phase p { margin: 0; font-size: 16px; color: var(--muted); line-height: 1.5; }
+.phase .now { position: absolute; top: -11px; right: 12px; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--accent); color: #fff; }
+.gates { grid-column: 1 / -1; position: relative; height: 72px; margin-top: 4px; border-top: 2px solid var(--border); }
+.gate { position: absolute; top: -9px; transform: translateX(-50%); text-align: center; font-size: 15px; line-height: 1.35; padding-top: 22px; white-space: nowrap; }
+.gate::before { content: ""; position: absolute; top: 0; left: 50%; width: 14px; height: 14px; margin-left: -7px; background: var(--accent); transform: rotate(45deg); border-radius: 2px; }
+.gate span { display: block; color: var(--muted); }
+.gate:nth-child(1) { left: calc(25% - 4px); } .gate:nth-child(2) { left: 50%; } .gate:nth-child(3) { left: calc(75% + 4px); }
+
+/* speaker notes */
+.notes { display: none; }
+.drawer { position: fixed; left: 0; right: 0; bottom: 0; max-height: 42vh; overflow: auto; z-index: 6; background: var(--card);
+  border-top: 2px solid var(--accent); padding: 16px max(16px, calc(50vw - 560px)) 56px; font-size: 18px; line-height: 1.55;
+  box-shadow: 0 -12px 40px rgba(0,0,0,.18); display: none; }
+.drawer.open { display: block; }
+.drawer p, .p-notes p { margin: 0 0 10px; }
+.drawer b, .p-notes b { color: var(--accent); }
+.drawer .t, .p-notes .t { font: 600 13px "JetBrains Mono", monospace; color: var(--muted); display: block; margin-bottom: 8px; }
+/* presenter window */
+.presenter { display: none; }
+body.is-presenter { overflow: auto; }
+body.is-presenter .deck, body.is-presenter .chrome, body.is-presenter .progress { display: none; }
+body.is-presenter .presenter { display: grid; grid-template-columns: 1.6fr 1fr; grid-template-rows: auto 1fr; gap: 16px; padding: 16px; height: 100vh; }
+.presenter .pv { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.presenter .pv .slide { left: 0; top: 0; margin: 0; transform-origin: 0 0; transform: scale(var(--pv, .5)); opacity: 1; visibility: visible; transition: none; box-shadow: none; pointer-events: none; }
+.presenter .side-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.presenter .label { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.presenter .clock { font: 700 44px "JetBrains Mono", monospace; letter-spacing: -.02em; cursor: pointer; }
+.presenter .pnav { display: flex; gap: 8px; align-items: center; font-size: 15px; color: var(--muted); }
+.presenter .pnav button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
+.p-notes { grid-column: 1 / -1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; font-size: 22px; line-height: 1.55; overflow: auto; }
 .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
 .card p { font-size: 17px; color: var(--muted); margin: 0; }
@@ -198,14 +235,16 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   .bars { grid-template-columns: 96px 1fr; font-size: 14px; }
   .legend { margin-left: 0; flex-wrap: wrap; }
   .table-scroll { overflow-x: auto; }
-  .chrome .nav, .progress, .hint { display: none; }
+  .chrome .nav, .progress, .hint, .drawer { display: none !important; }
+  .roadmap { grid-template-columns: 1fr 1fr; }
+  .gates { display: none; }
   .stat { font-size: 48px; }
 }
 @media print {
   body { overflow: visible; }
   .deck { position: static; }
   .slide { position: relative; left: 0; top: 0; margin: 0; transform: none; opacity: 1; visibility: visible; page-break-after: always; box-shadow: none; }
-  .chrome, .progress { display: none; }
+  .chrome, .progress, .drawer { display: none; }
 }
 </style>
 </head>
@@ -220,6 +259,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <h1>The model is not the<br><span>security boundary.</span></h1>
   <p class="lede">Kavach wraps any AI agent in a sandbox, a policy gateway and a secrets vault, from one config file and one command.</p>
   <div class="meta"><span class="oss">Open source</span><span>Team Kavach</span><span>Hackathon demo · Sep 29, 2026</span><span>kavach.lib13.com</span></div>
+  <aside class="notes" data-time="0:20">
+    <p><b>Say:</b> Hi, we're Team Kavach. Kavach means armor in Hindi.</p>
+<p><b>Say:</b> One line to remember: the model is not the security boundary. Kavach wraps any AI agent in a sandbox, a policy gateway and a secrets vault, from one config file and one command. And it's open source.</p>
+  </aside>
 </section>
 
 <!-- 2 · Section: problem -->
@@ -228,6 +271,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <h1>The problem</h1>
   <p class="lede">Agents are reaching customers, card numbers and patient records faster than the safety layer around them is being built.</p>
   <div class="foot"><span>Team Kavach</span><span>The problem</span></div>
+  <aside class="notes" data-time="0:05">
+    <p><b>Say:</b> Three parts: the problem, the stack, then a live demo and the code behind it.</p>
+<p><b>Say:</b> Agents are reaching customers, card numbers and patient records faster than anyone is building the safety layer around them.</p>
+  </aside>
 </section>
 
 <!-- 3 · The attack -->
@@ -249,6 +296,11 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>The problem</span></div>
+  <aside class="notes" data-time="0:35">
+    <p><b>Say:</b> Here's an ordinary refund agent. It reads a support ticket and issues refunds. Nothing unusual.</p>
+<p><b>Point at</b> the red block: hidden in an HTML comment, which the customer and the support rep never see, is an instruction to POST the card number to an attacker.</p>
+<p><b>Say:</b> A typical agent has the real card in its context, a real API key in its environment and the open internet. So it does what the text says. Frontier models refuse this more often, but "more often" is a probability. Containment is for the run where the model doesn't refuse.</p>
+  </aside>
 </section>
 
 <!-- 4 · Why it matters -->
@@ -267,6 +319,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <div class="side"><p><strong>The stakes are regulated.</strong> One leaked PAN pulls the whole agent runtime into PCI scope. One missed crisis in a mental-health chat is existential. Today's tools cover one or two layers, mostly for coding agents on laptops.</p></div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>The problem</span></div>
+  <aside class="notes" data-time="0:30">
+    <p><b>Say:</b> Every company that puts an agent in front of customers rebuilds the same five layers: containment, guardrails, secrets, evals, and audit.</p>
+<p><b>Say:</b> Big companies have platform teams for this. A 10-person digital-health startup or fintech doesn't. So these controls get skipped or bolted on after an incident, and in regulated work one leak or one missed crisis can end the company.</p>
+  </aside>
 </section>
 
 <!-- 5 · Market -->
@@ -296,6 +352,12 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>The problem · market</span></div>
+  <aside class="notes" data-time="0:35">
+    <p><b>Say:</b> The market agrees this matters. Over $2.8 billion across eight acquisitions since April 2025: CrowdStrike, Palo Alto, Cisco, Check Point, SentinelOne, F5, SailPoint and Cato.</p>
+<p><b>Say:</b> Notice what they bought: layers. Prompt filters, model scanning, identity for agents. Each covers one of the five.</p>
+<p><b>Say:</b> What's still open is runtime containment plus a data vault, packaged for the small team. That's our wedge.</p>
+<p><b>If asked:</b> source is PitchBook and press reports as of Sept 25, 2026. The two-color grouping is ours.</p>
+  </aside>
 </section>
 
 <!-- 6 · The gap -->
@@ -315,6 +377,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   </table>
   </div>
   <div class="foot"><span>Team Kavach</span><span>The problem · the gap</span></div>
+  <aside class="notes" data-time="0:25">
+    <p><b>Say:</b> Good pieces exist. Bromure proved the pattern for coding agents on a Mac: a VM per session and fake keys swapped for real ones on the way out. NVIDIA's platform needs data-center DPUs. Docker Sandboxes still pass secrets in as env vars. LangSmith observes but doesn't contain.</p>
+<p><b>Say:</b> Kavach takes Bromure's containment model to any Linux server and adds the data vault, domain policy and evals. It exports OpenTelemetry, so it sits under your existing tools rather than replacing them.</p>
+  </aside>
 </section>
 
 <!-- 7 · Section: stack -->
@@ -323,6 +389,9 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <h1>The tech stack</h1>
   <p class="lede">Contain the process and its network, not the SDK. That is what makes Kavach work with any model and any framework.</p>
   <div class="foot"><span>Team Kavach</span><span>Tech stack</span></div>
+  <aside class="notes" data-time="0:05">
+    <p><b>Say:</b> The key design choice: we contain the process and its network, not the SDK. That's why it works with any model and any framework.</p>
+  </aside>
 </section>
 
 <!-- 8a · The policy file -->
@@ -344,6 +413,12 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <span class="muted" style="font-size:17px"><strong style="color:var(--text)">34 lines of YAML</strong> replace a sandbox, a TLS gateway, a vault, an eBPF guard and an eval gate. Runtime, gateway, vault and baseline packs are open source; vertical packs are what a team adds.</span>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · the policy file</span></div>
+  <aside class="notes" data-time="0:40">
+    <p><b>Say:</b> The big idea: the policy file is the Dockerfile for agent safety.</p>
+<p><b>Say:</b> Dockerfiles took "works on my machine" and made it a file any team could ship. Kavach takes what a platform team would build and makes it a file a 10-person startup can review in a pull request.</p>
+<p><b>Walk the rows:</b> FROM becomes a vetted pack. EXPOSE becomes the egress allowlist. ENV is where Docker stops: your real key sits in the container. Kavach gives the agent a stand-in and swaps in the real key outside, only for the right host. And the eval gate is the health check: you ship only if the attack suite is clean.</p>
+<p><b>Land it:</b> 34 lines of YAML, open source.</p>
+  </aside>
 </section>
 
 <!-- 8b · The CLI -->
@@ -375,6 +450,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · the CLI</span></div>
+  <aside class="notes" data-time="0:25">
+    <p><b>Say:</b> And the whole interface is three commands. <code>demo</code> runs both versions on a laptop with no Docker. <code>run</code> contains an agent under a policy, and <code>--uncontained</code> shows what happens without us. <code>eval</code> is the CI gate: nonzero exit on any leak.</p>
+<p><b>Be precise:</b> today's CLI runs the refund agent in the repo. Wrapping any process, like <code>docker run</code>, is where it's going.</p>
+  </aside>
 </section>
 
 <!-- 8 · Architecture -->
@@ -399,6 +478,11 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <div class="box ebpf"><b>eBPF guard on the host</b> <span class="muted">· watches <code class="i">connect()</code> from the agent's cgroup · anything not to the proxy or DNS is logged and the process is killed</span></div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · architecture</span></div>
+  <aside class="notes" data-time="0:30">
+    <p><b>Say:</b> Here's how it works. The agent sits on a Docker network with no route out except the gateway. It only holds tokens and stand-in keys.</p>
+<p><b>Say:</b> The gateway is mitmproxy with our add-on. It enforces an exact-host allowlist, tokenizes card numbers on the way in, and turns tokens back into real cards only on the call to the payment processor.</p>
+<p><b>Point at</b> the dashed box: underneath, an eBPF probe on the host watches every connect() from the agent's container. The agent can't see it or turn it off.</p>
+  </aside>
 </section>
 
 <!-- 9 · Stack table -->
@@ -421,6 +505,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   </table>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack</span></div>
+  <aside class="notes" data-time="0:35">
+    <p><b>Say:</b> What each piece made possible. eBPF is the one we couldn't do without: a proxy alone can be bypassed with a raw socket, and only a kernel hook on the host catches that.</p>
+<p><b>Say:</b> mitmproxy gave us TLS inspection in a 55-line add-on. Crusoe gave us two things: a hosted open model behind an OpenAI-compatible API, so the key swap runs against a real provider, and a cheap VM with a real kernel for eBPF. And we built it with Claude Code in a day.</p>
+  </aside>
 </section>
 
 <!-- 10 · Section: demo -->
@@ -429,6 +517,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <h1>Live demo + code</h1>
   <p class="lede">"Steal the card": the same agent, the same ticket, the same model. The only change is <code class="i">kavach run</code>.</p>
   <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
+  <aside class="notes" data-time="0:05">
+    <p><b>Say:</b> Enough slides. Same agent, same ticket, same model. The only change is one command.</p>
+<p><b>Do:</b> make sure the demo UI is open and warmed (step 3 run once) before this slide.</p>
+  </aside>
 </section>
 
 <!-- 11 · Run of show -->
@@ -448,6 +540,12 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <span class="muted" style="font-size:15px">Tailnet only. Offline fallback: <code class="i">bin/kavach demo --ticket 2</code></span>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
+  <aside class="notes" data-time="4:00">
+    <p><b>Do:</b> switch to the live demo tab. Keys there: ← → steps, Enter runs, N hides its notes.</p>
+<p><b>Beats:</b> (1) uncontained, attacker gets the card. (2) inside Kavach, token, blocked, refund still succeeds. (3) raw socket, eBPF kills it. (4) real Qwen takes the bait. (5) Crusoe-hosted model, stand-in key swapped only for Crusoe. (6) eval gate, 10 of 10.</p>
+<p><b>While a real model thinks (30–90 s):</b> the model provider never sees a real card either, because model calls go through the gateway too. That keeps the agent runtime out of PCI scope.</p>
+<p><b>Fallback if the tailnet is down:</b> run <code>bin/kavach demo --ticket 2</code> locally, then use the next slide.</p>
+  </aside>
 </section>
 
 <!-- 12 · Before / after -->
@@ -472,6 +570,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   </div>
   <p class="muted" style="margin-top:24px;font-size:18px">The agent's code didn't change. The model didn't change. The agent still <em>tried</em> to exfiltrate; it just had nothing worth stealing and nowhere to send it.</p>
   <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
+  <aside class="notes" data-time="0:20">
+    <p><b>Say:</b> The recap in one picture. Uncontained, the agent sees the real card and the attacker gets it. Inside Kavach, the agent sees a token, the attacker gets a 403, and the refund still goes through.</p>
+<p><b>Say:</b> We didn't change the agent's code or the model. The agent still tried. It just had nothing worth stealing and nowhere to send it.</p>
+  </aside>
 </section>
 
 <!-- 13 · Code: policy -->
@@ -506,6 +608,11 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Code · policy</span></div>
+  <aside class="notes" data-time="0:25">
+    <p><b>Say:</b> Now the code. This is the Dockerfile for agents, line by line.</p>
+<p><b>Point at</b> the two highlighted lines: the card is only real on the way to the processor, and the key is only real on the way to its provider. Those two release rules do most of the work.</p>
+<p><b>Say:</b> The gate lives in the same file: zero cards at the attacker, zero in the agent's context, and the real refund must still succeed.</p>
+  </aside>
 </section>
 
 <!-- 14 · Code: gateway -->
@@ -539,6 +646,10 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Code · gateway</span></div>
+  <aside class="notes" data-time="0:30">
+    <p><b>Say:</b> The gateway makes three decisions on every request. One: is a stand-in key going to the right host? If not, block. Two: is the host on the allowlist, exact match? Three: if it's the payment processor, swap tokens back to cards; if it's a model provider, tokenize anything that slipped through.</p>
+<p><b>Say:</b> It's plain Python with no proxy inside, so the evals and the live proxy run the same code. Look-alike hosts like payments.internal.attacker.example fail the exact match.</p>
+  </aside>
 </section>
 
 <!-- 15 · Code: vault + eBPF -->
@@ -580,6 +691,10 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
   </div>
   <p class="muted" style="font-size:16px;margin-top:14px">Format-preserving tokens keep first-4 / last-4, so receipts and logs still make sense to a human.</p>
   <div class="foot"><span>Team Kavach</span><span>Code · vault + eBPF</span></div>
+  <aside class="notes" data-time="0:25">
+    <p><b>Say:</b> Left: the vault. It finds card numbers with a regex plus a Luhn check, so order numbers and phone numbers pass through, and issues tokens that keep the first and last four digits so humans can still read receipts.</p>
+<p><b>Say:</b> Right: the whole eBPF guard. It watches connect() from one container's cgroup. Anything that isn't the proxy or DNS is logged, and in enforce mode the process is killed.</p>
+  </aside>
 </section>
 
 <!-- 16 · Code: eval gate -->
@@ -610,25 +725,56 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Code · evals</span></div>
+  <aside class="notes" data-time="0:25">
+    <p><b>Say:</b> One run proves nothing, so <code>kavach eval</code> replays ten attacks both ways: hidden POSTs, HTTPS, query strings, raw sockets, look-alike hosts, stolen keys, echoing the card back.</p>
+<p><b>Say:</b> A test checks that each attack actually works without Kavach, so no test can pass trivially. 22 pytest checks in all. This is what a CI pipeline blocks a release on.</p>
+  </aside>
 </section>
 
-<!-- 17 · Close -->
-<section class="slide title-slide">
-  <p class="kicker">Open source · what's next</p>
-  <h1>One config file.<br><span>One command.</span></h1>
-  <p class="lede">Next: Firecracker microVM per session, a Rust gateway, and policy packs for mental-health chat, K-12 tutoring and payments. The core is open source: clone it, write a policy file, run your agent inside it. We're looking for design partners in healthcare, education and fintech.</p>
-  <div class="row" style="margin-top:36px;flex-wrap:wrap">
+<!-- 19 · Close + roadmap -->
+<section class="slide close">
+  <p class="kicker">Open source · roadmap</p>
+  <h2 style="margin-bottom:8px">One config file. <span class="accent">One command.</span></h2>
+  <p class="muted" style="font-size:18px;margin-bottom:22px">Four phases, each gated on proof a customer can see, with a real design partner, not an internal demo.</p>
+  <div class="roadmap">
+    <div class="phase"><span class="when">Months 0–3</span><h3>Prototype</h3><p>Runtime and gateway<br>Vault, baseline pack</p><span class="now">Today's demo</span></div>
+    <div class="phase"><span class="when">Months 3–6</span><h3>Vertical packs</h3><p>Healthcare, tutoring<br>Eval runner in CI</p></div>
+    <div class="phase"><span class="when">Months 6–12</span><h3>Team tier</h3><p>Dashboard, goals<br>Kubernetes operator</p></div>
+    <div class="phase"><span class="when">Month 12+</span><h3>Regulated</h3><p>BAA, on-prem<br>Confidential VMs</p></div>
+    <div class="gates">
+      <div class="gate"><b>Gate: zero PANs</b><span>in partner traces</span></div>
+      <div class="gate"><b>Gate: 3 paying</b><span>design partners</span></div>
+      <div class="gate"><b>Gate: SOC 2 Type I</b><span>and 10 customers</span></div>
+    </div>
+  </div>
+  <div class="row" style="margin-top:26px;align-items:center;flex-wrap:wrap;gap:14px">
     <a class="btn" href="https://github.com/Lib13Inc/kavach" rel="noopener">Star it on GitHub · Lib13Inc/kavach</a>
     <a class="btn ghost" href="../">Read the full pitch &amp; spec</a>
+    <span class="muted" style="font-size:16px">Looking for design partners in healthcare, education and fintech.</span>
   </div>
-  <div class="meta"><span>Thank you · Team Kavach</span></div>
+  <div class="foot"><span>Thank you · Team Kavach</span><span>Apache-2.0</span></div>
+  <aside class="notes" data-time="0:30">
+    <p><b>Say:</b> Where this goes. Today's demo is phase one: runtime, gateway, vault and a baseline pack. Next come vertical packs for healthcare and tutoring with evals in CI, then a team tier with a dashboard and a Kubernetes operator, then regulated deployments with BAAs, on-prem and confidential VMs.</p>
+<p><b>Say:</b> Each phase ships only after its gate is met with a real customer: zero cards in partner traces, then three paying design partners, then SOC 2 and ten customers.</p>
+<p><b>Close:</b> It's open source under Apache 2.0. One config file and one command give a small team the containment big companies build with platform teams. We're looking for design partners in healthcare, education and fintech. Thank you.</p>
+  </aside>
 </section>
 
 </main>
 
+<div class="drawer" id="drawer" aria-live="polite"></div>
+<div class="presenter" id="presenter">
+  <div><div class="label" id="p-now">Now</div><div class="pv" id="p-cur" aria-hidden="true"></div></div>
+  <div class="side-col">
+    <div class="label">Elapsed · click to reset</div><div class="clock" id="p-clock">00:00</div>
+    <div class="pnav"><button id="p-prev">‹ Prev</button><button id="p-next">Next ›</button><span id="p-count"></span></div>
+    <div class="label" id="p-next-label">Next</div><div class="pv" id="p-nxt" aria-hidden="true"></div>
+  </div>
+  <div class="p-notes" id="p-notes"></div>
+</div>
 <div class="chrome">
   <a href="../" aria-label="Back to the Kavach site">← Kavach</a>
-  <span class="hint">← → to navigate · F fullscreen · T theme</span>
+  <span class="hint">← → navigate · N notes · P presenter · F fullscreen · T theme</span>
   <div class="nav">
     <button id="prev" aria-label="Previous slide">‹</button>
     <span id="count">1 / 1</span>
@@ -641,14 +787,30 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
   const slides = [...document.querySelectorAll('.slide')];
   const count = document.getElementById('count');
   const bar = document.getElementById('progress');
+  const drawer = document.getElementById('drawer');
   const narrow = matchMedia('(max-width: 760px)');
+  const params = new URLSearchParams(location.search);
+  const embedded = window.self !== window.top;          // preview inside the presenter window
+  const presenter = params.has('presenter') && !embedded;
+  let chan = null;
+  try { if (!embedded) chan = new BroadcastChannel('kavach-slides'); } catch (_) {}
   let i = 0;
+
+  const notesOf = (k) => {
+    const n = slides[k] && slides[k].querySelector('.notes');
+    if (!n) return '<p class="muted">No notes for this slide.</p>';
+    return `<span class="t">Slide ${k + 1} of ${slides.length} · about ${n.dataset.time}</span>` + n.innerHTML;
+  };
+  const titleOf = (k) => {
+    const h = slides[k] && slides[k].querySelector('h1, h2');
+    return h ? h.textContent.replace(/\s+/g, ' ').trim() : '';
+  };
 
   function fit() {
     const s = Math.min(innerWidth / 1280, (innerHeight - 40) / 720) * 0.98;
     document.documentElement.style.setProperty('--scale', s);
   }
-  function show(n, push) {
+  function show(n, opts = {}) {
     i = Math.max(0, Math.min(slides.length - 1, n));
     slides.forEach((el, k) => {
       el.classList.toggle('active', k === i);
@@ -656,19 +818,65 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
     });
     count.textContent = `${i + 1} / ${slides.length}`;
     bar.style.width = `${((i + 1) / slides.length) * 100}%`;
-    if (push !== false) history.replaceState(null, '', `#${i + 1}`);
+    drawer.innerHTML = notesOf(i);
+    if (presenter) renderPresenter();
+    if (!opts.quiet) history.replaceState(null, '', `${location.search}#${i + 1}`);
+    if (chan && !opts.remote) chan.postMessage({ slide: i });
   }
   const fromHash = () => (parseInt(location.hash.slice(1), 10) || 1) - 1;
+
+  // ---- presenter window: current + next preview, notes, timer ----
+  let t0 = Date.now();
+  function preview(box, k) {
+    box.replaceChildren();
+    if (k >= slides.length) return;
+    const c = slides[k].cloneNode(true);
+    c.classList.add('active');
+    c.removeAttribute('aria-hidden');
+    box.appendChild(c);
+    box.style.setProperty('--pv', box.clientWidth / 1280);
+  }
+  function renderPresenter() {
+    const last = i >= slides.length - 1;
+    preview(document.getElementById('p-cur'), i);
+    preview(document.getElementById('p-nxt'), i + 1);
+    document.getElementById('p-nxt').style.visibility = last ? 'hidden' : 'visible';
+    document.getElementById('p-now').textContent = `Now · ${i + 1}/${slides.length} · ${titleOf(i)}`;
+    document.getElementById('p-next-label').textContent = last ? 'End of deck' : `Next · ${titleOf(i + 1)}`;
+    document.getElementById('p-count').textContent = `${i + 1} / ${slides.length}`;
+    document.getElementById('p-notes').innerHTML = notesOf(i);
+  }
+  if (presenter) {
+    document.body.classList.add('is-presenter');
+    document.title = 'Presenter · Kavach';
+    const clock = document.getElementById('p-clock');
+    const tick = () => {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      clock.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    };
+    setInterval(tick, 500);
+    clock.onclick = () => { t0 = Date.now(); tick(); };
+    document.getElementById('p-prev').onclick = () => show(i - 1);
+    document.getElementById('p-next').onclick = () => show(i + 1);
+  }
+
+  function openPresenter() {
+    const url = `${location.pathname}?presenter#${i + 1}`;
+    const w = window.open(url, 'kavach-presenter', 'width=1200,height=800');
+    if (!w) location.href = url;                         // popup blocked: open in this tab
+  }
 
   document.getElementById('prev').onclick = () => show(i - 1);
   document.getElementById('next').onclick = () => show(i + 1);
   addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey || narrow.matches) return;
+    if (embedded || e.metaKey || e.ctrlKey || e.altKey || (narrow.matches && !presenter)) return;
     const k = e.key;
     if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); show(i + 1); }
     else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); show(i - 1); }
     else if (k === 'Home') show(0);
     else if (k === 'End') show(slides.length - 1);
+    else if ((k === 'n' || k === 'N') && !presenter) drawer.classList.toggle('open');
+    else if ((k === 'p' || k === 'P') && !presenter) openPresenter();
     else if (k === 'f' || k === 'F') {
       document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
     } else if (k === 't' || k === 'T') {
@@ -678,19 +886,21 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
       try { localStorage.setItem('kavach-slides-theme', root.dataset.theme); } catch (_) {}
     }
   });
+  if (chan) chan.onmessage = (e) => { if (typeof e.data?.slide === 'number' && e.data.slide !== i) show(e.data.slide, { remote: true }); };
+
   let x0 = null;
   addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
   addEventListener('touchend', (e) => {
-    if (x0 === null || narrow.matches) return;
+    if (x0 === null || narrow.matches || embedded) return;
     const dx = e.changedTouches[0].clientX - x0; x0 = null;
     if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
   });
-  addEventListener('hashchange', () => show(fromHash(), false));
-  addEventListener('resize', fit);
-  narrow.addEventListener?.('change', () => show(i, false));
+  addEventListener('hashchange', () => show(fromHash(), { quiet: true, remote: embedded }));
+  addEventListener('resize', () => { fit(); if (presenter) renderPresenter(); });
+  narrow.addEventListener?.('change', () => show(i, { quiet: true, remote: true }));
   try { const t = localStorage.getItem('kavach-slides-theme'); if (t) document.documentElement.dataset.theme = t; } catch (_) {}
   fit();
-  show(fromHash(), false);
+  show(fromHash(), { quiet: true, remote: true });
 })();
 </script>
 </body>
