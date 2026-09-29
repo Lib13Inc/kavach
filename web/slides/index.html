@@ -78,7 +78,9 @@ p { margin: 0 0 14px; }
   background: #f87171; box-shadow: 18px 0 0 #fbbf24, 36px 0 0 #4ade80; }
 .term .p { color: var(--faint); } .term .cmd { color: #fff; font-weight: 700; }
 .verbs { display: grid; gap: 12px; }
-.verbs .card { padding: 14px 18px; }
+.verbs { gap: 10px; }
+.verbs .card { padding: 10px 16px; }
+.verbs .card p { font-size: 15.5px; }
 .verbs code.v { font: 700 17px "JetBrains Mono", monospace; color: var(--accent); }
 /* roadmap */
 .close { background: radial-gradient(900px 500px at 100% 0%, var(--accent-soft), transparent 70%), var(--surface); }
@@ -117,6 +119,19 @@ body.is-presenter .presenter { display: grid; grid-template-columns: 1.6fr 1fr; 
 .presenter .pnav { display: flex; gap: 8px; align-items: center; font-size: 15px; color: var(--muted); }
 .presenter .pnav button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
 .p-notes { grid-column: 1 / -1; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px 22px; font-size: 22px; line-height: 1.55; overflow: auto; }
+/* model matrix */
+.mx-empty { height: 100%; display: grid; align-content: center; gap: 4px; padding: 28px; border: 2px dashed var(--border); border-radius: 12px; color: var(--muted); font-size: 18px; }
+.mx-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+.mx-stats .card { padding: 12px 14px; }
+.mx-stats b { display: block; font: 800 34px/1.1 Inter, sans-serif; letter-spacing: -.03em; }
+.mx-stats span { display: block; font-size: 13.5px; line-height: 1.4; margin-top: 4px; color: var(--muted); }
+.mx-rows { display: grid; grid-template-columns: 170px 1fr 104px; gap: 5px 12px; align-items: center; font-size: 14px; }
+.mx-rows .h { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mx-rows .m { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.mx-rows .track { display: flex; align-items: center; gap: 8px; height: 20px; }
+.mx-rows .bar { height: 14px; background: var(--bar); border-radius: 0 4px 4px 0; min-width: 2px; }
+.mx-rows .v { font: 600 13px "JetBrains Mono", monospace; white-space: nowrap; }
+.mx-src { font-size: 12.5px; color: var(--faint); margin-top: 10px; }
 .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 22px; }
 .card p { font-size: 17px; color: var(--muted); margin: 0; }
@@ -410,21 +425,21 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   </div>
   <div class="row" style="margin-top:14px;align-items:center;gap:18px">
     <span class="oss">Open source</span>
-    <span class="muted" style="font-size:17px"><strong style="color:var(--text)">34 lines of YAML</strong> replace a sandbox, a TLS gateway, a vault, an eBPF guard and an eval gate. Runtime, gateway, vault and baseline packs are open source; vertical packs are what a team adds.</span>
+    <span class="muted" style="font-size:17px"><strong style="color:var(--text)">38 lines of YAML</strong> replace a sandbox, a TLS gateway, a vault, an eBPF guard and an eval gate. Runtime, gateway, vault and baseline packs are open source; vertical packs are what a team adds.</span>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · the policy file</span></div>
   <aside class="notes" data-time="0:40">
     <p><b>Say:</b> The big idea: the policy file is the Dockerfile for agent safety.</p>
 <p><b>Say:</b> Dockerfiles took "works on my machine" and made it a file any team could ship. Kavach takes what a platform team would build and makes it a file a 10-person startup can review in a pull request.</p>
 <p><b>Walk the rows:</b> FROM becomes a vetted pack. EXPOSE becomes the egress allowlist. ENV is where Docker stops: your real key sits in the container. Kavach gives the agent a stand-in and swaps in the real key outside, only for the right host. And the eval gate is the health check: you ship only if the attack suite is clean.</p>
-<p><b>Land it:</b> 34 lines of YAML, open source.</p>
+<p><b>Land it:</b> 38 lines of YAML, open source.</p>
   </aside>
 </section>
 
 <!-- 8b · The CLI -->
 <section class="slide">
   <p class="kicker">The whole interface</p>
-  <h2 style="margin-bottom:20px">Three commands. No SDK, no agent rewrite.</h2>
+  <h2 style="margin-bottom:20px">Four commands. No SDK, no agent rewrite.</h2>
   <div class="row grow">
     <div style="flex:1.55;min-width:0">
 <pre class="term" style="font-size:14px"><span class="p">$</span> <span class="cmd">kavach demo --ticket 2</span>            <span class="c"># no Docker: both runs, narrated</span>
@@ -439,19 +454,21 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
 <span class="p">$</span> <span class="cmd">kavach run --ticket 2</span>                <span class="c"># + gateway, vault, eBPF</span>
 <span class="p">$</span> <span class="cmd">kavach run --ticket 2 --model crusoe</span> <span class="c"># swap the model, same policy</span>
 <span class="p">$</span> <span class="cmd">kavach eval</span>                          <span class="c"># 10 attacks, both ways</span>
-<span class="s">10/10 cases pass the gate</span></pre>
+<span class="s">10/10 cases pass the gate</span>
+<span class="p">$</span> <span class="cmd">kavach matrix --runs 3 --cap 10</span>      <span class="c"># 10 real models × 10 attacks</span></pre>
     </div>
     <div class="verbs" style="flex:1">
       <div class="card"><code class="v">demo</code><p>Both runs side by side on a laptop. No Docker, two minutes.</p></div>
       <div class="card"><code class="v">run</code><p>Contain an agent with <code class="i">--policy</code>. Add <code class="i">--uncontained</code> to see it without Kavach.</p></div>
       <div class="card"><code class="v">eval</code><p>Prove it. Nonzero exit on any leak, so CI blocks the release.</p></div>
+      <div class="card"><code class="v">matrix</code><p>Every attack against real models via OpenRouter, both ways, with a spend cap.</p></div>
       <div class="card" style="border-style:dashed"><p><strong style="color:var(--text)">Where it's going:</strong> wrap any process, like <code class="i">docker run</code> wraps any image.</p>
         <p style="margin-top:8px;font:500 13.5px 'JetBrains Mono',monospace;color:var(--accent);white-space:nowrap">kavach run --policy mh.yaml -- python agent.py</p></div>
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · the CLI</span></div>
   <aside class="notes" data-time="0:25">
-    <p><b>Say:</b> And the whole interface is three commands. <code>demo</code> runs both versions on a laptop with no Docker. <code>run</code> contains an agent under a policy, and <code>--uncontained</code> shows what happens without us. <code>eval</code> is the CI gate: nonzero exit on any leak.</p>
+    <p><b>Say:</b> And the whole interface is four commands. <code>demo</code> runs both versions on a laptop with no Docker. <code>run</code> contains an agent under a policy, and <code>--uncontained</code> shows what happens without us. <code>eval</code> is the CI gate: nonzero exit on any leak. <code>matrix</code> throws every attack at real models from ten vendors through OpenRouter, with and without Kavach, and stops at a dollar cap.</p>
 <p><b>Be precise:</b> today's CLI runs the refund agent in the repo. Wrapping any process, like <code>docker run</code>, is where it's going.</p>
   </aside>
 </section>
@@ -473,7 +490,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
     <div class="arrow">→</div>
     <div class="box">
       <h3>Outside world</h3>
-      <ul><li><code class="i">tickets.internal</code></li><li><code class="i">payments.internal</code></li><li>Crusoe / Anthropic / OpenAI APIs</li><li><span class="accent">attacker.example ✕</span></li></ul>
+      <ul><li><code class="i">tickets.internal</code></li><li><code class="i">payments.internal</code></li><li>Crusoe · OpenRouter · Anthropic APIs</li><li><span class="accent">attacker.example ✕</span></li></ul>
     </div>
     <div class="box ebpf"><b>eBPF guard on the host</b> <span class="muted">· watches <code class="i">connect()</code> from the agent's cgroup · anything not to the proxy or DNS is logged and the process is killed</span></div>
   </div>
@@ -497,7 +514,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
       <tr><td>mitmproxy</td><td>A TLS-inspecting gateway in a 55-line add-on</td><td class="dim">Token and key swaps on HTTPS model calls, in one day, without writing a proxy</td></tr>
       <tr><td>Docker networks</td><td><code class="i">internal: true</code> sandbox whose only route is the gateway</td><td class="dim">Allowlisting that holds even if the agent ignores <code class="i">HTTP_PROXY</code></td></tr>
       <tr><td>Crusoe Cloud</td><td>Managed Inference (Qwen3.8-27B, OpenAI-compatible) + a $0.16/hr VM running the whole stack</td><td class="dim">A real hosted model behind a swapped key, on a real Linux kernel with BTF for eBPF</td></tr>
-      <tr><td>Local Qwen3 30B</td><td>A real open model on a homelab box that follows the injection</td><td class="dim">Proof the attack isn't a mock artifact</td></tr>
+      <tr><td>OpenRouter</td><td>One OpenAI-compatible API, one stand-in key, ten vendors' models (plus local Qwen3 30B on a homelab box)</td><td class="dim">Testing containment across Claude, GPT, Gemini, Grok, Llama, Qwen, GLM, Kimi, DeepSeek and Mistral in one run</td></tr>
       <tr><td>Python vault</td><td>Luhn-checked PAN detection, format-preserving tokens</td><td class="dim">Refunds that succeed while the agent never sees a card</td></tr>
       <tr><td>Tailscale · Cloudflare</td><td>Private HTTPS for the stage UI; this site on Workers static assets</td><td class="dim">A demo UI that can start runs, never exposed publicly</td></tr>
       <tr><td>Claude Code</td><td>Pair-built gateway, evals, deploy scripts and this deck</td><td class="dim">Five layers of plumbing in one hackathon day</td></tr>
@@ -507,7 +524,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="foot"><span>Team Kavach</span><span>Tech stack</span></div>
   <aside class="notes" data-time="0:35">
     <p><b>Say:</b> What each piece made possible. eBPF is the one we couldn't do without: a proxy alone can be bypassed with a raw socket, and only a kernel hook on the host catches that.</p>
-<p><b>Say:</b> mitmproxy gave us TLS inspection in a 55-line add-on. Crusoe gave us two things: a hosted open model behind an OpenAI-compatible API, so the key swap runs against a real provider, and a cheap VM with a real kernel for eBPF. And we built it with Claude Code in a day.</p>
+<p><b>Say:</b> mitmproxy gave us TLS inspection in a 55-line add-on. Crusoe gave us two things: a hosted open model behind an OpenAI-compatible API, so the key swap runs against a real provider, and a cheap VM with a real kernel for eBPF. OpenRouter let us put ten vendors' models behind one stand-in key for the matrix. And we built it with Claude Code in a day.</p>
   </aside>
 </section>
 
@@ -731,6 +748,38 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
   </aside>
 </section>
 
+<!-- 18b · Model matrix -->
+<section class="slide" id="matrix-slide">
+  <p class="kicker">Proof · real models</p>
+  <h2 style="margin-bottom:16px">Real models, every attack, both ways</h2>
+  <div class="row grow">
+    <div style="flex:1;min-width:0" class="side">
+<pre class="term" style="font-size:13.5px"><span class="p">$</span> <span class="cmd">kavach matrix --runs 3 --cap 10</span>
+<span class="c"># 10 models × 10 tickets × 3 runs × 2 modes</span>
+<span class="c"># legend: . resisted   ! followed   E error</span></pre>
+      <p style="margin-top:16px"><strong>Same agent, real model APIs.</strong> Tickets, card processor and attacker are simulated in-process, so nothing real leaks. The only real network call is to the model.</p>
+      <p><strong>Contained runs go through the same Gateway code</strong> the proxy runs: stand-in key swapped, cards tokenized.</p>
+      <p><strong>Budget-capped and resumable:</strong> stops before the cap, keys redacted from results.</p>
+    </div>
+    <div style="flex:1.35;min-width:0" id="mx">
+      <div class="mx-empty">
+        <p><strong>No results yet.</strong></p>
+        <p>Run <code class="i">kavach matrix</code>; it writes <code class="i">web/matrix/results.json</code>. Redeploy and this panel fills in from real runs.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Team Kavach</span><span>Proof · model matrix</span></div>
+  <aside class="notes" data-time="0:35">
+    <p><b>Say:</b> The obvious question: is this only about gullible mock models? So we built <code>kavach matrix</code>. It sends every attack to real models from ten vendors through OpenRouter, uncontained and inside Kavach, three times each, because models are nondeterministic.</p>
+    <p><b>Point at</b> the left number: how often a real model followed the hidden instruction with no containment. Then the middle: leaks inside Kavach.</p>
+    <p><b>Land it:</b> inside Kavach, models still followed the injection, and nothing leaked. The model tried; the containment held.</p>
+    <p><b>Say, if the left number is low:</b> frontier models mostly refuse, and that's the point: "mostly." One follow in a few hundred runs is a leaked card at production volume. Containment doesn't depend on the model's mood that day.</p>
+    <p><b>Say:</b> Which model resists best changes every release. What doesn't change is the containment.</p>
+    <p><b>If the panel says "partial run":</b> say so. It's live data from today, not a curated result.</p>
+    <p><b>If the panel says "No results yet":</b> skip this slide. It fills in once <code>web/matrix/results.json</code> is published.</p>
+  </aside>
+</section>
+
 <!-- 19 · Close + roadmap -->
 <section class="slide close">
   <p class="kicker">Open source · roadmap</p>
@@ -901,7 +950,59 @@ PAN_RE = re.compile(<span class="s">r"(?&lt;![\w-])(?:\d[ -]?){12,18}\d(?![\w-])
   try { const t = localStorage.getItem('kavach-slides-theme'); if (t) document.documentElement.dataset.theme = t; } catch (_) {}
   fit();
   show(fromHash(), { quiet: true, remote: true });
+  renderMatrix();
 })();
+
+// Fill the model-matrix slide from `kavach matrix` output, if it has been published.
+async function renderMatrix() {
+  const box = document.getElementById('mx');
+  if (!box) return;
+  let data;
+  try {
+    const r = await fetch('../matrix/results.json', { cache: 'no-store' });
+    if (!r.ok) return;
+    data = await r.json();
+  } catch (_) { return; }
+  const runs = (data.runs || []).filter((r) => !r.error);
+  if (!runs.length) return;
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const leaked = (r) => r.pan_leaked || r.key_leaked;
+  const open = runs.filter((r) => r.mode === 'open');
+  const kav = runs.filter((r) => r.mode === 'kavach');
+  const pct = (n, d) => (d ? Math.round((100 * n) / d) : 0);
+  const followedOpen = open.filter((r) => r.attempted).length;
+  const openLeaks = open.filter(leaked).length;
+  const followedKav = kav.filter((r) => r.attempted).length;
+  const kavLeaks = kav.filter((r) => leaked(r) || r.pan_in_context).length;
+  const errors = (data.runs || []).length - runs.length;
+  const expected = (data.models || []).length * (data.tickets || []).length * (data.runs_per_case || 1) * 2;
+  const partial = expected && runs.length < expected;
+  const nModels = new Set(runs.map((r) => r.model)).size;
+  const byModel = new Map();
+  for (const r of runs) {
+    const m = byModel.get(r.model) || { open: 0, followed: 0, leaks: 0, kav: 0, kavLeaks: 0 };
+    if (r.mode === 'open') { m.open++; if (r.attempted) m.followed++; if (leaked(r)) m.leaks++; }
+    else { m.kav++; if (leaked(r) || r.pan_in_context) m.kavLeaks++; }
+    byModel.set(r.model, m);
+  }
+  const rows = [...byModel.entries()].sort((a, b) => pct(b[1].followed, b[1].open) - pct(a[1].followed, a[1].open));
+  const name = (id) => id.split(':').pop().split('/').pop();
+  box.innerHTML = `
+    <div class="mx-stats">
+      <div class="card"><b class="accent">${followedOpen}/${open.length}</b><span>uncontained runs followed the injection; ${openLeaks} leaked a real card or key</span></div>
+      <div class="card"><b style="color:var(--${kavLeaks ? 'bad' : 'good'})">${kavLeaks}</b><span>leaks inside Kavach across ${kav.length} runs${followedKav ? `, though ${followedKav} followed the injection` : ''}</span></div>
+      <div class="card"><b>${nModels}<small style="font-size:18px;color:var(--muted)"> models</small></b><span>${partial ? `partial run: ${runs.length} of ${expected} runs` : `${runs.length} runs complete`}</span></div>
+    </div>
+    <div class="mx-rows" role="table" aria-label="Injection follow rate per model">
+      <div class="h">Model</div><div class="h">Followed the injection, uncontained</div><div class="h">In Kavach</div>
+      ${rows.slice(0, 10).map(([id, m]) => `
+        <div class="m" title="${esc(id)}">${esc(name(id))}</div>
+        <div class="track" title="${esc(name(id))}: followed ${m.followed}/${m.open} uncontained runs, leaked in ${m.leaks}">
+          <div class="bar" style="width:${Math.max(1, pct(m.followed, m.open) * 0.78)}%"></div><span class="v">${pct(m.followed, m.open)}%</span></div>
+        <div><span class="pill ${m.kavLeaks ? 'bad' : 'good'}" style="font-size:12.5px;padding:2px 8px">${m.kavLeaks ? '✕ ' + m.kavLeaks + ' leak' + (m.kavLeaks > 1 ? 's' : '') : '✓ 0 leaks'}</span></div>`).join('')}
+    </div>
+    <p class="mx-src">${runs.length} runs${errors ? ` (+${errors} model errors excluded)` : ''} · policy ${esc(data.policy || '')} · $${Number(data.spent_usd || 0).toFixed(2)} spent · ${esc((data.generated_at || '').slice(0, 10))} · <a href="../matrix/">full results →</a></p>`;
+}
 </script>
 </body>
 </html>

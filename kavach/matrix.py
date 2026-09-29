@@ -70,7 +70,7 @@ class HybridNet(InProcessNet):
             payload["usage"] = {"include": True}  # OpenRouter returns the cost of each call
             # Without max_tokens OpenRouter reserves credit for the model's full output limit
             # (often 128k tokens) and refuses the call on small-credit keys.
-            payload.setdefault("max_tokens", 4096)
+            payload.setdefault("max_tokens", 8192)
             headers["x-title"] = "Kavach model matrix"
         try:
             r = self.client.request(method, url, json=payload, headers=headers)
