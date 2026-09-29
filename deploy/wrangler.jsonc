@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Static-assets-only Worker serving ../web at kavach.lib13.com.
+  "name": "kavach-web",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "../web",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    { "pattern": "kavach.lib13.com", "custom_domain": true }
+  ],
+  "workers_dev": false
+}

@@ -1,0 +1,12 @@
+{
+  "name": "kavach-web-deploy",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "dev": "python3 build.py && wrangler dev",
+    "deploy": "python3 build.py && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}
