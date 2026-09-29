@@ -2,7 +2,7 @@
 
 > Hackathon starter code for the demo in this spec lives in this repo; see README.md.
 
-Sep 29, 2026 · @Vaibhav Bhandari
+Sep 29, 2026 · Team Kavach
 
 ## Pitch: the problem
 
