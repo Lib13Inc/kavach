@@ -1,0 +1,27 @@
+# Alternative to bpftrace: a Tetragon TracingPolicy that SIGKILLs any TCP
+# connect from the agent container to something other than the gateway.
+# Untested draft for the hackathon; adjust the gateway CIDR to your sandbox
+# network (docker network inspect kavach-hack_sandbox).
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: kavach-egress-guard
+spec:
+  podSelector: {}          # on plain Docker, filter by container in `tetra getevents` instead
+  kprobes:
+    - call: tcp_connect
+      syscall: false
+      args:
+        - index: 0
+          type: sock
+      selectors:
+        - matchArgs:
+            - index: 0
+              operator: NotDAddr
+              values:
+                - 172.16.0.0/12      # docker bridge ranges; narrow to the sandbox subnet
+            - index: 0
+              operator: NotDPort
+              values: ["8080", "53"]
+          matchActions:
+            - action: Sigkill

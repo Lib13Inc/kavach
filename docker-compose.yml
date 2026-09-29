@@ -1,0 +1,101 @@
+# Kavach hackathon stack.
+#   docker compose up -d gateway tickets payments attacker
+#   ./kavach run --uncontained      # leaks
+#   ./kavach run                    # contained
+networks:
+  sandbox:            # the agent's only network: no route to the internet
+    internal: true
+  egress:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  mitm-ca: {}
+
+x-svc: &svc
+  image: python:3.12-slim
+  working_dir: /app
+  volumes: ["./services:/app/services:ro", "./trace:/trace"]
+
+services:
+  gateway:
+    image: mitmproxy/mitmproxy:11.1.3
+    command: >
+      mitmdump --listen-host 0.0.0.0 --listen-port 8080
+      --set block_global=false
+      -s /kavach/kavach/mitm_addon.py
+    environment:
+      KAVACH_POLICY: /kavach/policy/payments.yaml
+      KAVACH_TRACE: /trace/gateway.jsonl
+      # REAL keys live only here, never in the agent container.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - ./kavach:/kavach/kavach:ro
+      - ./policy:/kavach/policy:ro
+      - ./trace:/trace
+      - mitm-ca:/home/mitmproxy/.mitmproxy
+    networks:
+      sandbox: { aliases: [gateway] }
+      egress: {}
+
+  tickets:
+    <<: *svc
+    command: python services/server.py tickets
+    networks: { egress: { aliases: [tickets.internal] } }
+
+  payments:
+    <<: *svc
+    command: python services/server.py payments
+    networks: { egress: { aliases: [payments.internal] } }
+
+  attacker:
+    <<: *svc
+    command: python services/server.py attacker
+    environment: { ATTACKER_LOG: /trace/attacker.jsonl }
+    networks:
+      egress:
+        ipv4_address: 172.28.0.66
+        aliases: [attacker.example, payments.internal.attacker.example]
+
+  # Contained agent: sandbox network only, stand-in keys, proxy env, locked down.
+  agent:
+    build: { context: ., dockerfile: sandbox/Dockerfile }
+    profiles: [contained]
+    depends_on: [gateway, tickets, payments, attacker]
+    environment:
+      HTTP_PROXY: http://gateway:8080
+      HTTPS_PROXY: http://gateway:8080
+      http_proxy: http://gateway:8080
+      https_proxy: http://gateway:8080
+      NO_PROXY: ""
+      SSL_CERT_FILE: /ca/mitmproxy-ca-cert.pem
+      ANTHROPIC_API_KEY: sk-kavach-standin-anthropic
+      OPENAI_API_KEY: sk-kavach-standin-openai
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      KAVACH_AGENT_TRACE: /trace/agent.jsonl
+    volumes: ["mitm-ca:/ca:ro", "./trace:/trace"]
+    networks: [sandbox]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 512m
+
+  # Uncontained agent: same image, real keys, direct internet. For contrast.
+  agent-naked:
+    build: { context: ., dockerfile: sandbox/Dockerfile }
+    profiles: [uncontained]
+    depends_on: [tickets, payments, attacker]
+    environment:
+      # Fake "real" keys by default so case 7 never leaks yours, even locally.
+      ANTHROPIC_API_KEY: ${NAKED_ANTHROPIC_API_KEY:-sk-ant-REAL-demo-key-000}
+      OPENAI_API_KEY: ${NAKED_OPENAI_API_KEY:-sk-REAL-demo-key-000}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      KAVACH_AGENT_TRACE: /trace/agent-naked.jsonl
+    volumes: ["./trace:/trace"]
+    networks: [egress]

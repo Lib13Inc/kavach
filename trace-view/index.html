@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kavach Trace</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1c1b19; --mut:#6b6760; --line:#e4e0d8; --card:#fff;
+          --ok:#2f7d4f; --bad:#b3261e; --swap:#1f5fbf; --warn:#9a6700; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161513; --fg:#ece9e3; --mut:#a39e95; --line:#34312c; --card:#1f1d1a;
+          --ok:#5cc28a; --bad:#ff8a80; --swap:#7fb0ff; --warn:#e3b341; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.45 ui-sans-serif, system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--mut); margin: 0 0 16px; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 16px; text-align: center; color: var(--mut); background: var(--card); }
+  .drop.on { border-color: var(--swap); }
+  .stats { display:flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+  .stat { background: var(--card); border:1px solid var(--line); border-radius: 10px; padding: 10px 14px; min-width: 130px; }
+  .stat b { display:block; font-size: 22px; }
+  .filters { display:flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .filters label { background: var(--card); border:1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor:pointer; font-size: 12px; }
+  ol { list-style: none; padding: 0; margin: 0; border-left: 2px solid var(--line); }
+  li { position: relative; padding: 6px 0 6px 18px; }
+  li::before { content:""; position:absolute; left:-6px; top:12px; width:10px; height:10px; border-radius:50%; background: var(--mut); }
+  li.bad::before { background: var(--bad); } li.ok::before { background: var(--ok); }
+  li.swap::before { background: var(--swap); } li.warn::before { background: var(--warn); }
+  .k { font-weight: 600; } .src { color: var(--mut); font-size: 12px; margin-left: 6px; }
+  .t { color: var(--mut); font: 12px ui-monospace, monospace; margin-right: 8px; }
+  .d { color: var(--fg); overflow-wrap: anywhere; font: 12.5px ui-monospace, monospace; opacity: .9; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kavach trace</h1>
+  <p class="sub">Drop any of <code>trace/*.jsonl</code> (gateway, agent, attacker, ebpf) to merge them into one timeline.</p>
+  <div class="drop" id="drop">Drop .jsonl files here or <input type="file" id="file" multiple accept=".jsonl,.json,.txt"></div>
+  <div class="stats" id="stats"></div>
+  <div class="filters" id="filters"></div>
+  <ol id="list"></ol>
+</main>
+<script>
+const CLASS = { egress_blocked:'bad', secret_misuse_blocked:'bad', ebpf_connect_denied:'bad', attacker_received:'bad',
+  token_swap:'swap', secret_swap:'swap', tokenized_response:'swap', tokenized_request:'swap',
+  egress_allowed:'ok', final_answer:'ok', tool_call:'warn' };
+let events = [], hidden = new Set();
+
+function add(text, name) {
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    try { const e = JSON.parse(line); e.source ??= name; e.ts ??= 0; events.push(e); } catch {}
+  }
+  events.sort((a, b) => a.ts - b.ts);
+  render();
+}
+function render() {
+  const n = k => events.filter(e => e.kind === k).length;
+  document.getElementById('stats').innerHTML = [
+    ['events', events.length], ['blocked', n('egress_blocked') + n('secret_misuse_blocked') + n('ebpf_connect_denied')],
+    ['token swaps', n('token_swap') + n('tokenized_response')], ['attacker hits', n('attacker_received')]
+  ].map(([l, v]) => `<div class="stat"><b>${v}</b>${l}</div>`).join('');
+  const kinds = [...new Set(events.map(e => e.kind))];
+  document.getElementById('filters').innerHTML = kinds.map(k =>
+    `<label><input type="checkbox" data-k="${k}" ${hidden.has(k) ? '' : 'checked'}> ${k}</label>`).join('');
+  document.querySelectorAll('#filters input').forEach(i => i.onchange = () => {
+    i.checked ? hidden.delete(i.dataset.k) : hidden.add(i.dataset.k); render(); });
+  const t0 = events[0]?.ts || 0;
+  document.getElementById('list').innerHTML = events.filter(e => !hidden.has(e.kind)).map(e => {
+    const d = e.detail || e.result || e.text || (e.args && JSON.stringify(e.args)) || e.url || e.body || e.dest || '';
+    const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    return `<li class="${CLASS[e.kind] || ''}"><span class="t">+${(e.ts - t0).toFixed(2)}s</span>
+      <span class="k">${esc(e.kind)}</span><span class="src">${esc(e.source)}</span><div class="d">${esc(d)}</div></li>`;
+  }).join('');
+}
+const read = files => [...files].forEach(f => f.text().then(t => add(t, f.name.replace(/\.jsonl?$/, ''))));
+document.getElementById('file').onchange = e => read(e.target.files);
+const drop = document.getElementById('drop');
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('on'); };
+drop.ondragleave = () => drop.classList.remove('on');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('on'); read(e.dataTransfer.files); };
+// When served next to trace/ (python3 -m http.server from the repo root), auto-load.
+['gateway', 'agent', 'agent-naked', 'attacker', 'ebpf', 'local-kavach'].forEach(n =>
+  fetch(`../trace/${n}.jsonl`).then(r => r.ok ? r.text() : '').then(t => t && add(t, n)).catch(() => {}));
+</script>
+</body>
+</html>

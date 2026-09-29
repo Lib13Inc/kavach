@@ -1,0 +1,36 @@
+#!/usr/bin/env bpftrace
+/*
+ * Kavach egress guard (hackathon edition).
+ *
+ * Watches connect() from ONE container's cgroup. Anything that is not the
+ * gateway proxy port (8080) or DNS (53) is a violation: log it, and in
+ * enforce mode kill the process.
+ *
+ * Usage (see ebpf/guard.sh, which finds the cgroup for you):
+ *   sudo bpftrace --unsafe ebpf/egress_guard.bt /sys/fs/cgroup/system.slice/docker-<id>.scope 1
+ *   $1 = cgroup v2 path of the agent container
+ *   $2 = 1 to kill on violation, 0 to log only
+ *
+ * Needs a kernel with BTF (ls /sys/kernel/btf/vmlinux) and bpftrace >= 0.16.
+ */
+
+BEGIN
+{
+  printf("kavach egress guard: watching %s (enforce=%d)\n", str($1), $2);
+}
+
+tracepoint:syscalls:sys_enter_connect
+/ cgroup == cgroupid(str($1)) /
+{
+  $sa = (struct sockaddr_in *)args->uservaddr;
+  if ($sa->sin_family == 2) {           /* AF_INET */
+    $port = (($sa->sin_port & 0xff) << 8) | (($sa->sin_port >> 8) & 0xff);
+    if ($port != 8080 && $port != 53) {
+      printf("{\"source\":\"ebpf\",\"kind\":\"ebpf_connect_denied\",\"comm\":\"%s\",\"pid\":%d,\"dest\":\"%s:%d\"}\n",
+             comm, pid, ntop(2, $sa->sin_addr.s_addr), $port);
+      if ($2 == 1) {
+        signal("KILL");
+      }
+    }
+  }
+}
