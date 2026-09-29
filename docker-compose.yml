@@ -77,6 +77,8 @@ services:
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       KAVACH_AGENT_TRACE: /trace/agent.jsonl
+      KAVACH_HTTP_TIMEOUT: ${KAVACH_HTTP_TIMEOUT:-20}
+      KAVACH_START_DELAY: ${KAVACH_START_DELAY:-0}
     volumes: ["mitm-ca:/ca:ro", "./trace:/trace"]
     networks: [sandbox]
     read_only: true
@@ -97,5 +99,7 @@ services:
       OPENAI_API_KEY: ${NAKED_OPENAI_API_KEY:-sk-REAL-demo-key-000}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
       KAVACH_AGENT_TRACE: /trace/agent-naked.jsonl
+      KAVACH_HTTP_TIMEOUT: ${KAVACH_HTTP_TIMEOUT:-20}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     volumes: ["./trace:/trace"]
     networks: [egress]

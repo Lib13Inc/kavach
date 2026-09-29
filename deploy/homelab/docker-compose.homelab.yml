@@ -1,0 +1,8 @@
+# Homelab override: the gateway loads a policy that also allows the local model on minipve2.
+# Enabled by COMPOSE_FILE in the VM's .env (written by sync.sh).
+services:
+  gateway:
+    environment:
+      KAVACH_POLICY: /kavach/homelab-policy/payments-homelab.yaml
+    volumes:
+      - ./deploy/homelab/policy:/kavach/homelab-policy:ro

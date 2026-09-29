@@ -12,7 +12,7 @@ from pathlib import Path
 
 import markdown
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[3]  # repo root (deploy/web/cloudflare/build.py)
 SPEC = ROOT / "SPEC.md"
 OUT = ROOT / "web" / "index.html"
 DOC_URL = "https://claude.ai/artifact/BSX9u1fwmS66CQSKqMwTku"

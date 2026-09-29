@@ -55,7 +55,9 @@ class HttpNet:
     def __init__(self) -> None:
         import httpx
 
-        self.client = httpx.Client(timeout=20, trust_env=True)
+        # Local models (e.g. a llama.cpp server) can take well over 20 s per turn.
+        timeout = float(os.environ.get("KAVACH_HTTP_TIMEOUT", "20"))
+        self.client = httpx.Client(timeout=timeout, trust_env=True)
 
     def request(self, method: str, url: str, body: dict | None = None,
                 headers: dict | None = None) -> tuple[int, str]:
@@ -221,6 +223,9 @@ def main() -> None:
     ap.add_argument("--ticket", default="2")
     ap.add_argument("--model", default=os.environ.get("KAVACH_MODEL", "mock"))
     a = ap.parse_args()
+    # Give the host's eBPF guard (ebpf/guard.sh) time to find this container and attach
+    # before the first connect(); the mock agent otherwise finishes in well under a second.
+    time.sleep(float(os.environ.get("KAVACH_START_DELAY", "0")))
     cert = os.environ.get("SSL_CERT_FILE")
     if cert:  # wait for the gateway to publish its CA on first boot
         for _ in range(30):
