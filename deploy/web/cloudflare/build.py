@@ -17,6 +17,9 @@ SPEC = ROOT / "SPEC.md"
 OUT = ROOT / "web" / "index.html"
 DOC_URL = "https://claude.ai/artifact/BSX9u1fwmS66CQSKqMwTku"
 REPO_URL = "https://github.com/Lib13Inc/kavach"
+# The live stage demo on the homelab VM, served by `tailscale serve` (deploy/homelab/tailscale.sh).
+# Only reachable from devices on the tailnet.
+DEMO_URL = "https://kavach-demo.bettong-beta.ts.net/"
 
 
 def _sized_img(m: re.Match) -> str:
@@ -47,7 +50,7 @@ def render(md_text: str) -> tuple[str, str, str]:
 def main() -> None:
     title, toc, content = render(SPEC.read_text(encoding="utf-8"))
     page = TEMPLATE.format(title=html.escape(title), toc=toc, content=content,
-                           doc_url=DOC_URL, repo_url=REPO_URL)
+                           doc_url=DOC_URL, repo_url=REPO_URL, demo_url=DEMO_URL)
     OUT.write_text(page, encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(page):,} bytes)")
 
@@ -96,6 +99,7 @@ a {{ color: var(--accent); text-underline-offset: 2px; }}
 .actions {{ display: flex; flex-wrap: wrap; gap: 12px; }}
 .btn {{ display: inline-block; padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 15px;
   text-decoration: none; border: 1px solid var(--border); color: var(--text); background: var(--bg); }}
+.btn.demo span {{ font-weight: 500; font-size: 12px; color: var(--muted); margin-left: 6px; }}
 .btn.primary {{ background: var(--accent); border-color: var(--accent); color: #fff; }}
 .layout {{ max-width: 1120px; margin: 0 auto; padding: 32px 16px 80px; display: grid;
   grid-template-columns: 220px minmax(0, 1fr); gap: 48px; }}
@@ -140,6 +144,7 @@ footer .inner {{ max-width: 1120px; margin: 0 auto; padding: 24px 16px; display:
     <div class="actions">
       <a class="btn primary" href="{repo_url}" rel="noopener">View on GitHub</a>
       <a class="btn" href="{doc_url}" rel="noopener">Open the live doc</a>
+      <a class="btn demo" href="{demo_url}" rel="noopener">Run the live demo <span>tailnet only</span></a>
     </div>
   </div>
 </header>

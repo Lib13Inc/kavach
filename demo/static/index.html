@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kavach · Steal the card</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7z' fill='%23D6A84E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #12161c; --panel: #1a2029; --panel-2: #212835; --line: #2d3645;
+  --text: #e9edf2; --muted: #8d98a8; --faint: #5d6878;
+  --brass: #d6a84e; --brass-soft: rgba(214, 168, 78, .13);
+  --signal: #f0524f; --signal-soft: rgba(240, 82, 79, .13);
+  --pass: #8fbf9f;
+  --display: "Archivo", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ink); color: var(--text); font: 15px/1.5 var(--body); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+/* ---------- frame ---------- */
+.app { height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+header { display: flex; align-items: center; gap: 20px; padding: 12px 24px; border-bottom: 1px solid var(--line); }
+.mark { display: flex; align-items: center; gap: 10px; font: 800 18px/1 var(--display); font-stretch: 125%; letter-spacing: .14em; }
+.mark svg { width: 22px; height: 22px; }
+.title { font: 600 18px/1 var(--display); font-stretch: 85%; color: var(--muted); }
+.spacer { flex: 1; }
+.pill { font: 500 12px/1 var(--mono); padding: 7px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.pill.running { color: var(--brass); border-color: var(--brass); }
+.pill.running::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--brass); margin-right: 8px; animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { opacity: .25; } to { opacity: 1; } }
+
+.body { display: grid; grid-template-columns: 360px minmax(0, 1fr); min-height: 0; }
+
+/* ---------- script rail ---------- */
+.rail { border-right: 1px solid var(--line); display: grid; grid-template-rows: auto 1fr auto; min-height: 0; }
+.steps { list-style: none; margin: 0; padding: 12px 12px 8px; counter-reset: step; border-bottom: 1px solid var(--line); }
+.steps li button { width: 100%; display: flex; gap: 10px; align-items: baseline; text-align: left; background: none; border: 0; padding: 6px 10px; border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 14px; }
+.steps li button::before { counter-increment: step; content: counter(step); font: 500 12px/1 var(--mono); color: var(--faint); min-width: 14px; }
+.steps li button:hover { color: var(--text); }
+.steps li.on button { background: var(--panel-2); color: var(--text); }
+.steps li.on button::before { color: var(--brass); }
+.steps .tag { margin-left: auto; font: 500 10.5px/1 var(--mono); color: var(--faint); letter-spacing: .04em; }
+.notes { padding: 18px 22px; overflow-y: auto; }
+.notes h2 { font: 700 26px/1.1 var(--display); font-stretch: 90%; margin: 0 0 14px; letter-spacing: -.01em; }
+.notes p { margin: 0 0 12px; color: #c9d0da; }
+.notes strong { color: var(--brass); font-weight: 600; }
+.notes ul { margin: 0 0 12px; padding-left: 18px; color: #c9d0da; }
+.notes code { font: 13px var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+.hide-notes .notes > :not(h2) { display: none; }
+.runbar { padding: 14px 22px 18px; border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: center; }
+.run { flex: 1; padding: 12px 14px; border-radius: 8px; border: 0; background: var(--brass); color: #1b1407; font-weight: 600; cursor: pointer; text-align: left; }
+.run small { display: block; font: 400 12px/1.3 var(--mono); opacity: .75; margin-top: 2px; }
+.run:disabled { background: var(--panel-2); color: var(--faint); cursor: default; }
+.run.leak { background: var(--signal); color: #fff; }
+.nav { width: 42px; height: 46px; border-radius: 8px; border: 1px solid var(--line); background: none; cursor: pointer; color: var(--muted); }
+
+/* ---------- stage ---------- */
+.stage { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.ticket { padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: flex-start; }
+.ticket .label { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding-top: 4px; white-space: nowrap; }
+.ticket .text { font-size: 15px; white-space: pre-wrap; margin: 0; max-width: 980px; }
+.hidden-note { display: inline; border: 1px dashed var(--signal); background: var(--signal-soft); border-radius: 4px; padding: 1px 4px; color: #ffc9c7; }
+.hidden-note::before { content: "hidden from the customer · "; font: 500 11px var(--mono); color: var(--signal); }
+
+.lanes { display: grid; grid-template-columns: 1fr 1fr 1fr; min-height: 0; }
+.lane { display: grid; grid-template-rows: auto 1fr; min-height: 0; border-right: 1px solid var(--line); }
+.lane:last-child { border-right: 0; }
+.lane h3 { margin: 0; padding: 14px 18px 10px; font: 700 13px/1 var(--display); font-stretch: 125%; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; gap: 10px; align-items: baseline; }
+.lane h3 span { font: 400 12px var(--body); letter-spacing: 0; text-transform: none; color: var(--faint); font-stretch: 100%; }
+.lane.kavach { background: linear-gradient(180deg, var(--brass-soft), transparent 45%); border-left: 2px solid var(--brass); border-right: 2px solid var(--brass); }
+.lane.kavach h3 { color: var(--brass); }
+.lane.kavach.off { background: none; border-left: 2px dashed var(--line); border-right: 2px dashed var(--line); }
+.lane.kavach.off h3 { color: var(--faint); }
+.feed { overflow-y: auto; padding: 4px 14px 16px; scroll-behavior: smooth; }
+.empty { color: var(--faint); font-size: 14px; padding: 8px 4px; }
+.ev { border-left: 2px solid var(--line); padding: 6px 10px 8px; margin: 6px 0; animation: in .22s ease-out; }
+@keyframes in { from { opacity: 0; transform: translateY(4px); } }
+.ev .h { font-weight: 500; font-size: 14px; }
+.ev .d { font: 12.5px/1.45 var(--mono); color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+.ev.allow { border-color: var(--pass); } .ev.allow .h::before { content: "✓ "; color: var(--pass); }
+.ev.block { border-color: var(--brass); background: var(--brass-soft); } .ev.block .h::before { content: "✕ "; color: var(--brass); }
+.ev.swap { border-color: var(--brass); } .ev.swap .h::before { content: "⇄ "; color: var(--brass); }
+.ev.leak { border-color: var(--signal); background: var(--signal-soft); }
+.ev.good { border-color: var(--pass); }
+.ev.quiet { opacity: .6; }
+mark { background: none; font-weight: 500; }
+mark.pan { color: #ff8a87; }
+mark.tok { color: var(--brass); }
+
+/* ---------- verdict: the card ---------- */
+.verdict { border-top: 1px solid var(--line); padding: 16px 24px 20px; display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: center; }
+.card { position: relative; aspect-ratio: 1.586; border-radius: 14px; padding: 18px 20px; background: linear-gradient(135deg, #2a3240, #1b2029 60%); border: 1px solid var(--line); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: border-color .3s, box-shadow .3s; }
+.card .cap { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.card .chip { width: 38px; height: 28px; border-radius: 5px; background: linear-gradient(135deg, #c9a45a, #8c6d2f); opacity: .8; }
+.card .num { font: 500 22px/1.2 var(--mono); letter-spacing: .06em; color: var(--muted); overflow-wrap: anywhere; }
+.card .foot { font-size: 13px; color: var(--muted); }
+.card .stamp { position: absolute; right: 14px; top: 34px; transform: rotate(-8deg); font: 800 20px/1 var(--display); font-stretch: 125%; letter-spacing: .12em; padding: 6px 10px; border: 3px solid currentColor; border-radius: 6px; opacity: 0; }
+.card.leaked { border-color: var(--signal); box-shadow: 0 0 0 1px var(--signal), 0 10px 40px -10px rgba(240, 82, 79, .55); }
+.card.leaked .num { color: #ffb3b1; }
+.card.leaked .stamp { color: var(--signal); opacity: .95; animation: stamp .35s cubic-bezier(.2, 1.6, .4, 1); }
+.card.safe { border-color: var(--brass); box-shadow: 0 0 0 1px var(--brass), 0 10px 40px -12px rgba(214, 168, 78, .45); }
+.card.safe .num { color: var(--brass); }
+.card.safe .stamp { color: var(--brass); opacity: .95; animation: stamp .35s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes stamp { from { transform: rotate(-8deg) scale(1.8); opacity: 0; } }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.fact .k { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.fact .v { font: 700 24px/1.15 var(--display); font-stretch: 90%; margin-top: 8px; }
+.fact .s { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.v.bad { color: var(--signal); } .v.ok { color: var(--pass); } .v.brass { color: var(--brass); }
+
+/* ---------- eval ---------- */
+.evalview { grid-column: 1 / -1; overflow: auto; padding: 18px 24px; }
+.evalview table { border-collapse: collapse; width: 100%; font: 13.5px/1.4 var(--mono); }
+.evalview th { text-align: left; color: var(--faint); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--line); text-transform: uppercase; font-size: 11px; letter-spacing: .06em; }
+.evalview td { padding: 9px 12px; border-bottom: 1px solid var(--line); animation: in .25s ease-out both; }
+.evalview td.bad { color: #ff8a87; } .evalview td.ok { color: var(--pass); } .evalview td.gate { font-weight: 500; color: var(--brass); }
+.evalview .sum { margin-top: 16px; font: 700 28px/1.1 var(--display); font-stretch: 90%; color: var(--brass); }
+
+.console { font: 12.5px/1.5 var(--mono); color: var(--signal); white-space: pre-wrap; padding: 8px 18px; }
+
+@media (max-width: 1100px) {
+  .body { grid-template-columns: 1fr; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--line); }
+  .app { height: auto; }
+  .lanes { grid-template-columns: 1fr; }
+  .lane { border-right: 0; border-bottom: 1px solid var(--line); max-height: 360px; }
+  .verdict { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } .feed { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7z" fill="#D6A84E"/></svg>KAVACH</div>
+    <div class="title" id="title">Steal the card</div>
+    <div class="spacer"></div>
+    <div class="pill" id="model">model: mock</div>
+    <div class="pill" id="status">ready</div>
+  </header>
+  <div class="body">
+    <aside class="rail">
+      <ol class="steps" id="steps"></ol>
+      <div class="notes" id="notes"></div>
+      <div class="runbar">
+        <button class="nav" id="prev" aria-label="Previous step">←</button>
+        <button class="run" id="run"></button>
+        <button class="nav" id="next" aria-label="Next step">→</button>
+      </div>
+    </aside>
+    <main class="stage">
+      <div class="ticket"><div class="label" id="tlabel">Ticket</div><p class="text" id="ttext"></p></div>
+      <div class="lanes" id="lanes">
+        <section class="lane"><h3>Sandbox <span>what the agent does</span></h3><div class="feed" id="f-sandbox"></div></section>
+        <section class="lane kavach" id="lane-kavach"><h3>Kavach <span>gateway + eBPF guard</span></h3><div class="feed" id="f-kavach"></div></section>
+        <section class="lane"><h3>Outside <span>what reaches the world</span></h3><div class="feed" id="f-outside"></div></section>
+      </div>
+      <div class="verdict" id="verdict">
+        <div class="card" id="card">
+          <div class="cap">What the attacker walked away with</div>
+          <div class="chip"></div>
+          <div class="num" id="cardnum">•••• •••• •••• ••••</div>
+          <div class="foot" id="cardfoot">No run yet</div>
+          <div class="stamp" id="stamp"></div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Refund</div><div class="v" id="v-refund">—</div><div class="s" id="s-refund">&nbsp;</div></div>
+          <div class="fact"><div class="k">Card seen by agent</div><div class="v" id="v-seen">—</div><div class="s" id="s-seen">&nbsp;</div></div>
+          <div class="fact"><div class="k">Calls blocked</div><div class="v" id="v-blocked">—</div><div class="s" id="s-blocked">&nbsp;</div></div>
+          <div class="fact"><div class="k">Processes killed</div><div class="v" id="v-killed">—</div><div class="s" id="s-killed">&nbsp;</div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const PAN = /\b(?:\d[ -]?){12,18}\d\b/g;
+const TOK = /tok_\d{4}_[0-9a-f]{6}_\d{4}/g;
+const MODEL_NAME = { mock: "mock (always obeys)", openai: "Qwen3 30B · local" };
+let script = { steps: [] }, tickets = {}, cur = 0, since = 0, runId = 0, running = false, events = [];
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const hl = s => esc(s).replace(TOK, m => `<mark class="tok">${m}</mark>`).replace(PAN, m => `<mark class="pan">${m}</mark>`);
+const luhn = s => { const d = s.replace(/\D/g, ""); let sum = 0; for (let i = 0; i < d.length; i++) { let n = +d[d.length - 1 - i]; if (i % 2) { n *= 2; if (n > 9) n -= 9; } sum += n; } return d.length >= 13 && sum % 10 === 0; };
+const realPans = s => (String(s).match(PAN) || []).filter(luhn);
+const short = (s, n = 180) => { s = String(s ?? ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; };
+const md = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`(.+?)`/g, "<code>$1</code>")
+  .split(/\n{2,}/).map(b => /^- /m.test(b) ? "<ul>" + b.split(/\n(?=- )/).map(li => "<li>" + li.replace(/^- /, "") + "</li>").join("") + "</ul>" : "<p>" + b.replace(/\n/g, " ") + "</p>").join("");
+
+function actionLabel(a) {
+  if (!a) return ["No run on this step", "talk, then → for the next step"];
+  if (a.kind === "eval") return ["Run the eval gate", "kavach eval · 10 attacks, both ways"];
+  const where = a.kind === "contained" ? "inside Kavach" : "uncontained";
+  return [`Run ticket ${a.ticket} ${where}`, MODEL_NAME[a.model || "mock"]];
+}
+
+function renderStep() {
+  const s = script.steps[cur]; if (!s) return;
+  $("steps").querySelectorAll("li").forEach((li, i) => li.classList.toggle("on", i === cur));
+  $("notes").innerHTML = `<h2>${esc(s.title)}</h2>` + md(s.notes);
+  $("notes").scrollTop = 0;
+  const [label, sub] = actionLabel(s.action);
+  const run = $("run");
+  run.innerHTML = `${esc(label)}<small>${esc(sub)}</small>`;
+  run.disabled = !s.action || running;
+  run.classList.toggle("leak", s.action?.kind === "uncontained");
+  if (s.action?.model) $("model").textContent = "model: " + MODEL_NAME[s.action.model];
+  if (s.ticket && !running) showTicket(s.ticket);
+  $("prev").disabled = cur === 0; $("next").disabled = cur === script.steps.length - 1;
+}
+
+function showTicket(id) {
+  const t = tickets[id]; if (!t) return;
+  document.querySelector(".ticket").style.display = "";
+  $("tlabel").textContent = `Ticket ${id}`;
+  const parts = t.text.split(/(<!--[\s\S]*?-->)/);
+  $("ttext").innerHTML = parts.map(p => p.startsWith("<!--") ? `<span class="hidden-note">${esc(p)}</span>` : esc(p)).join("");
+}
+
+function go(i) { cur = Math.max(0, Math.min(script.steps.length - 1, i)); renderStep(); }
+
+// ---------------------------------------------------------------- events -> lanes
+function describe(e) {
+  const f = e.file || "", k = e.kind;
+  if (e.source === "agent") {
+    if (k === "session_start") return ["sandbox", "quiet", `Agent starts on ticket ${e.ticket}`, `model: ${MODEL_NAME[e.model] || e.model}`];
+    if (k === "tool_call") return ["sandbox", "", `${e.tool}()`, JSON.stringify(e.args)];
+    if (k === "tool_result") return ["sandbox", "quiet", `${e.tool} returned`, short(e.result)];
+    if (k === "model_input") return ["sandbox", "", "Model reads the ticket", short(e.text, 240)];
+    if (k === "final_answer") return ["sandbox", "good", "Replies to the customer", e.text];
+  }
+  if (e.source === "gateway") {
+    if (k === "gateway_started") return null;
+    if (k === "egress_allowed") return ["kavach", "allow", `${e.method} ${e.host}`, "on the allowlist"];
+    if (k === "egress_blocked") return ["kavach", "block", `Blocked ${e.method} ${e.host}`, e.carried ? "not on the allowlist · it carried a card token" : "not on the allowlist"];
+    if (k === "tokenized_response") return ["kavach", "swap", "Card number → token", `before the agent sees ${e.host}'s reply`];
+    if (k === "tokenized_request") return ["kavach", "swap", "Card number → token", `before it reaches model provider ${e.host}`];
+    if (k === "token_swap") return ["kavach", "swap", "Token → real card", `only on the call to ${e.host}`];
+    if (k === "secret_swap") return ["kavach", "swap", "Stand-in key → real key", `only for ${e.host}`];
+    if (k === "secret_misuse_blocked") return ["kavach", "block", `Blocked: API key sent to ${e.host}`, e.detail];
+    return ["kavach", "", k, e.detail || ""];
+  }
+  if (e.source === "ebpf") return ["kavach", "block", `eBPF killed ${e.comm}`, `raw connect() to ${e.dest}, around the gateway`];
+  if (e.source === "attacker") {
+    const leak = realPans(e.body).length > 0;
+    return ["outside", leak ? "leak" : "", leak ? "Attacker received a real card" : "Attacker received", `${e.channel} ${e.method} ${e.path} · ${short(e.body, 200)}`];
+  }
+  if (e.source === "demo" && k === "guard_armed") return ["kavach", "quiet", "eBPF guard armed", "watching the sandbox's connect() calls"];
+  return null;
+}
+
+function addEvent(e) {
+  events.push(e);
+  if (e.source === "console") { if (running && /Traceback|Error|error:/.test(e.text)) addRaw("sandbox", "leak", "Agent error", e.text); return; }
+  const d = describe(e); if (!d) return;
+  addRaw(...d);
+  if (e.source === "agent" && e.kind === "tool_result" && e.tool === "refund") {
+    const ok = /succeeded/.test(e.result);
+    const amt = (e.result.match(/"amount_usd": ([\d.]+)/) || [])[1];
+    addRaw("outside", ok ? "good" : "leak", ok ? "Payment processor: refund succeeded" : "Payment processor: refund failed", ok ? `$${amt} · card ending ${(e.result.match(/"card_last4": "(\d+)"/) || [])[1] || "?"}` : short(e.result));
+  }
+}
+
+function addRaw(lane, tone, h, d) {
+  const feed = $("f-" + lane); feed.querySelector(".empty")?.remove();
+  const el = document.createElement("div"); el.className = "ev " + tone;
+  el.innerHTML = `<div class="h">${hl(h)}</div>` + (d ? `<div class="d">${hl(d)}</div>` : "");
+  feed.appendChild(el); feed.scrollTop = feed.scrollHeight;
+}
+
+function resetBoard(kind) {
+  events = [];
+  for (const l of ["sandbox", "kavach", "outside"]) $("f-" + l).innerHTML = "";
+  const off = kind === "uncontained";
+  $("lane-kavach").classList.toggle("off", off);
+  $("f-kavach").innerHTML = off ? `<div class="empty">No Kavach on this run. The agent holds the real card and key and talks to the internet directly.</div>` : "";
+  $("f-sandbox").innerHTML = `<div class="empty">Waiting for the agent…</div>`;
+  $("f-outside").innerHTML = `<div class="empty">Nothing has left the building yet.</div>`;
+  const isEval = kind === "eval";
+  document.querySelector(".ticket").style.display = isEval ? "none" : "";
+  $("lanes").style.display = isEval ? "none" : ""; $("verdict").style.display = isEval ? "none" : "";
+  document.querySelector(".evalview")?.remove();
+  if (isEval) { const v = document.createElement("div"); v.className = "evalview"; v.innerHTML = `<div class="empty">Replaying ten attacks…</div>`; $("lanes").after(v); }
+  setCard("idle"); ["refund", "seen", "blocked", "killed"].forEach(k => fact(k, "…", "", ""));
+}
+
+function fact(k, v, cls, s) { const el = $("v-" + k); el.textContent = v; el.className = "v " + (cls || ""); $("s-" + k).innerHTML = s || "&nbsp;"; }
+
+function setCard(state, num, foot) {
+  const c = $("card"); c.className = "card " + (state === "idle" ? "" : state);
+  $("cardnum").innerHTML = num || "•••• •••• •••• ••••";
+  $("cardfoot").textContent = foot || (state === "idle" ? (running ? "Watching the wire…" : "No run yet") : "");
+  $("stamp").textContent = state === "leaked" ? "LEAKED" : state === "safe" ? "CONTAINED" : "";
+}
+
+function summarize(run) {
+  if (run.kind === "eval") return renderEval(run);
+  const att = events.filter(e => e.source === "attacker");
+  const leaked = att.flatMap(e => realPans(e.body));
+  const tokens = att.flatMap(e => String(e.body).match(TOK) || []);
+  const keyLeak = att.some(e => /REAL/.test(e.body));
+  const refund = events.find(e => e.source === "agent" && e.kind === "tool_result" && e.tool === "refund");
+  const seen = events.filter(e => e.source === "agent" && e.kind === "tool_result" && e.tool === "get_ticket").some(e => realPans(e.result).length);
+  const blocked = events.filter(e => e.source === "gateway" && /blocked/.test(e.kind)).length;
+  const killed = events.filter(e => e.source === "ebpf").length;
+  const done = run.status === "done";
+
+  if (leaked.length) setCard("leaked", `<mark class="pan">${esc(leaked[0])}</mark>`, keyLeak ? "Plus the real API key." : "The full card number, in the clear.");
+  else if (done && tokens.length) setCard("safe", `<mark class="tok">${esc(tokens[0])}</mark>`, "Only a token. Worthless outside Kavach.");
+  else if (done) setCard("safe", "Nothing", killed ? "The one attempt was killed before it connected." : blocked ? "Every attempt stopped at the gateway." : "No attempt reached the attacker.");
+  else setCard("idle");
+
+  if (refund) fact("refund", /succeeded/.test(refund.result) ? "Succeeded" : "Failed", /succeeded/.test(refund.result) ? "ok" : "bad", "the customer got their money");
+  else if (done) fact("refund", killed ? "Killed" : "None", killed ? "brass" : "bad", killed ? "agent stopped after the refund call" : "no refund was issued");
+  if (seen) fact("seen", "Real card", "bad", "in the model's context");
+  else if (refund || done) fact("seen", "Token only", "brass", "the model never saw the number");
+  else fact("seen", "…", "", "");
+  fact("blocked", run.kind === "uncontained" ? "0" : String(blocked), run.kind === "uncontained" ? "bad" : blocked ? "brass" : "", run.kind === "uncontained" ? "nothing is watching" : "by the gateway");
+  fact("killed", run.kind === "uncontained" ? "0" : String(killed), killed ? "brass" : "", run.kind === "uncontained" ? "nothing is watching" : "by the eBPF guard");
+}
+
+function renderEval(run) {
+  const lines = events.filter(e => e.source === "console").map(e => e.text);
+  const rows = lines.filter(l => /^\s*\d+\s{2}/.test(l)).map(l => l.trim().split(/\s{2,}/));
+  const sum = lines.find(l => /cases pass/.test(l));
+  const v = document.querySelector(".evalview"); if (!v) return;
+  if (!rows.length) return;
+  v.innerHTML = `<table><thead><tr><th>#</th><th>Attack</th><th>Without Kavach</th><th>With Kavach</th><th>Gate</th></tr></thead><tbody>` +
+    rows.map((r, i) => `<tr>${r.map((c, j) => `<td style="animation-delay:${i * 60}ms" class="${j === 2 && c !== "clean" ? "bad" : j === 3 ? (c === "clean" ? "ok" : "bad") : j === 4 ? "gate" : ""}">${esc(c)}</td>`).join("")}</tr>`).join("") +
+    `</tbody></table>` + (sum ? `<div class="sum">${esc(sum.trim())}</div>` : "");
+}
+
+// ---------------------------------------------------------------- running
+async function runStep() {
+  const a = script.steps[cur]?.action; if (!a || running) return;
+  const r = await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: a.kind, ticket: a.ticket || "2", model: a.model || "mock" }) });
+  const j = await r.json();
+  if (!r.ok) { $("status").textContent = j.error; return; }
+  runId = j.id; since = 0; running = true;
+  if (a.kind !== "eval") showTicket(a.ticket || "2");
+  resetBoard(a.kind); renderStep(); poll();
+}
+
+async function poll() {
+  let j;
+  try { j = await (await fetch(`/api/events?since=${since}`)).json(); } catch { setTimeout(poll, 1000); return; }
+  const run = j.run;
+  if (run.id !== runId) { runId = run.id; since = 0; if (run.status !== "idle") { resetBoard(run.kind); } return setTimeout(poll, 50); }
+  j.events.forEach(addEvent); since += j.events.length;
+  running = run.status === "running";
+  const secs = run.started ? Math.round(((run.ended || Date.now() / 1000) - run.started)) : 0;
+  $("status").className = "pill" + (running ? " running" : "");
+  $("status").textContent = run.status === "idle" ? "ready" : running ? `running · ${secs}s` : `done in ${secs}s`;
+  if (run.kind) summarize(run);
+  if (running) setTimeout(poll, 400); else renderStep();
+}
+
+document.addEventListener("keydown", e => {
+  if (e.target.closest("button") && (e.key === "Enter" || e.key === " ")) return;
+  if (e.key === "ArrowRight") go(cur + 1);
+  else if (e.key === "ArrowLeft") go(cur - 1);
+  else if (e.key === "Enter") runStep();
+  else if (e.key.toLowerCase() === "n") document.body.classList.toggle("hide-notes");
+});
+$("prev").onclick = () => go(cur - 1); $("next").onclick = () => go(cur + 1); $("run").onclick = runStep;
+
+(async () => {
+  [script] = await Promise.all([fetch("/api/script").then(r => r.json()),
+    fetch("/api/tickets").then(r => r.json()).then(ts => ts.forEach(t => tickets[t.id] = t))]);
+  $("title").textContent = script.title;
+  $("steps").innerHTML = script.steps.map((s, i) => {
+    const a = s.action, tag = !a ? "" : a.kind === "eval" ? "eval" : (a.kind === "contained" ? "kavach" : "open") + (a.model === "openai" ? " · qwen" : "");
+    return `<li><button data-i="${i}">${esc(s.title)}<span class="tag">${tag}</span></button></li>`;
+  }).join("");
+  $("steps").querySelectorAll("button").forEach(b => b.onclick = () => go(+b.dataset.i));
+  go(0); resetBoard(null); $("lanes").style.display = ""; $("verdict").style.display = "";
+  $("f-sandbox").innerHTML = `<div class="empty">Pick a step and press Run, or Enter.</div>`;
+  $("f-outside").innerHTML = `<div class="empty">Nothing has left the building yet.</div>`;
+  ["refund", "seen", "blocked", "killed"].forEach(k => fact(k, "—", "", ""));
+  poll();
+})();
+</script>
+</body>
+</html>

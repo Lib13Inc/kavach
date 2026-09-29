@@ -33,5 +33,5 @@ ENV
 # (The gateway and services mount the code, so a restart picks it up.)
 if vm "command -v docker >/dev/null"; then
   say "rebuild agent images, restart stack"
-  vm "cd $REMOTE_DIR && sudo docker compose --profile contained --profile uncontained build -q && sudo systemctl restart kavach-stack"
+  vm "cd $REMOTE_DIR && sudo docker compose --profile contained --profile uncontained build -q && sudo systemctl restart kavach-stack; sudo systemctl try-restart kavach-demo 2>/dev/null || true"
 fi
