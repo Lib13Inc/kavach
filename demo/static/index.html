@@ -48,6 +48,7 @@ header { display: flex; align-items: center; gap: 20px; padding: 12px 24px; bord
 .steps li button:hover { color: var(--text); }
 .steps li.on button { background: var(--panel-2); color: var(--text); }
 .steps li.on button::before { color: var(--brass); }
+.steps li.na button { opacity: .45; }
 .steps .tag { margin-left: auto; font: 500 10.5px/1 var(--mono); color: var(--faint); letter-spacing: .04em; }
 .notes { padding: 18px 22px; overflow-y: auto; }
 .notes h2 { font: 700 26px/1.1 var(--display); font-stretch: 90%; margin: 0 0 14px; letter-spacing: -.01em; }
@@ -188,7 +189,8 @@ mark.tok { color: var(--brass); }
 const $ = id => document.getElementById(id);
 const PAN = /\b(?:\d[ -]?){12,18}\d\b/g;
 const TOK = /tok_\d{4}_[0-9a-f]{6}_\d{4}/g;
-const MODEL_NAME = { mock: "mock (always obeys)", openai: "Qwen3 30B · local" };
+let MODEL_NAME = { mock: "mock (always obeys)" };
+const available = s => !s.action || s.action.kind === "eval" || (s.action.model || "mock") in MODEL_NAME;
 let script = { steps: [] }, tickets = {}, cur = 0, since = 0, runId = 0, running = false, events = [];
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -203,6 +205,7 @@ function actionLabel(a) {
   if (!a) return ["No run on this step", "talk, then → for the next step"];
   if (a.kind === "eval") return ["Run the eval gate", "kavach eval · 10 attacks, both ways"];
   const where = a.kind === "contained" ? "inside Kavach" : "uncontained";
+  if (!((a.model || "mock") in MODEL_NAME)) return [`Run ticket ${a.ticket} ${where}`, `model "${a.model}" is not set up on this host`];
   return [`Run ticket ${a.ticket} ${where}`, MODEL_NAME[a.model || "mock"]];
 }
 
@@ -214,9 +217,9 @@ function renderStep() {
   const [label, sub] = actionLabel(s.action);
   const run = $("run");
   run.innerHTML = `${esc(label)}<small>${esc(sub)}</small>`;
-  run.disabled = !s.action || running;
+  run.disabled = !s.action || running || !available(s);
   run.classList.toggle("leak", s.action?.kind === "uncontained");
-  if (s.action?.model) $("model").textContent = "model: " + MODEL_NAME[s.action.model];
+  if (s.action?.model && available(s)) $("model").textContent = "model: " + MODEL_NAME[s.action.model];
   if (s.ticket && !running) showTicket(s.ticket);
   $("prev").disabled = cur === 0; $("next").disabled = cur === script.steps.length - 1;
 }
@@ -344,7 +347,7 @@ function renderEval(run) {
 
 // ---------------------------------------------------------------- running
 async function runStep() {
-  const a = script.steps[cur]?.action; if (!a || running) return;
+  const a = script.steps[cur]?.action; if (!a || running || !available(script.steps[cur])) return;
   const r = await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ kind: a.kind, ticket: a.ticket || "2", model: a.model || "mock" }) });
   const j = await r.json();
   if (!r.ok) { $("status").textContent = j.error; return; }
@@ -380,9 +383,11 @@ $("prev").onclick = () => go(cur - 1); $("next").onclick = () => go(cur + 1); $(
   [script] = await Promise.all([fetch("/api/script").then(r => r.json()),
     fetch("/api/tickets").then(r => r.json()).then(ts => ts.forEach(t => tickets[t.id] = t))]);
   $("title").textContent = script.title;
+  MODEL_NAME = script.models || MODEL_NAME;
   $("steps").innerHTML = script.steps.map((s, i) => {
-    const a = s.action, tag = !a ? "" : a.kind === "eval" ? "eval" : (a.kind === "contained" ? "kavach" : "open") + (a.model === "openai" ? " · qwen" : "");
-    return `<li><button data-i="${i}">${esc(s.title)}<span class="tag">${tag}</span></button></li>`;
+    const a = s.action, m = a?.model && a.model !== "mock" ? " · " + a.model : "";
+    const tag = !a ? "" : !available(s) ? "n/a here" : a.kind === "eval" ? "eval" : (a.kind === "contained" ? "kavach" : "open") + m;
+    return `<li class="${available(s) ? "" : "na"}"><button data-i="${i}">${esc(s.title)}<span class="tag">${tag}</span></button></li>`;
   }).join("");
   $("steps").querySelectorAll("button").forEach(b => b.onclick = () => go(+b.dataset.i));
   go(0); resetBoard(null); $("lanes").style.display = ""; $("verdict").style.display = "";

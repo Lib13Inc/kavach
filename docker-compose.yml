@@ -31,6 +31,7 @@ services:
       # REAL keys live only here, never in the agent container.
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      CRUSOE_API_KEY: ${CRUSOE_API_KEY:-}
     volumes:
       - ./kavach:/kavach/kavach:ro
       - ./policy:/kavach/policy:ro
@@ -73,6 +74,9 @@ services:
       SSL_CERT_FILE: /ca/mitmproxy-ca-cert.pem
       ANTHROPIC_API_KEY: sk-kavach-standin-anthropic
       OPENAI_API_KEY: sk-kavach-standin-openai
+      CRUSOE_API_KEY: sk-kavach-standin-crusoe
+      CRUSOE_BASE_URL: ${CRUSOE_BASE_URL:-}
+      CRUSOE_MODEL: ${CRUSOE_MODEL:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
@@ -97,6 +101,10 @@ services:
       # Fake "real" keys by default so case 7 never leaks yours, even locally.
       ANTHROPIC_API_KEY: ${NAKED_ANTHROPIC_API_KEY:-sk-ant-REAL-demo-key-000}
       OPENAI_API_KEY: ${NAKED_OPENAI_API_KEY:-sk-REAL-demo-key-000}
+      # Needed only for `--model crusoe` uncontained; set NAKED_CRUSOE_API_KEY to the real key to allow it.
+      CRUSOE_API_KEY: ${NAKED_CRUSOE_API_KEY:-sk-REAL-demo-key-000}
+      CRUSOE_BASE_URL: ${CRUSOE_BASE_URL:-}
+      CRUSOE_MODEL: ${CRUSOE_MODEL:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
       KAVACH_AGENT_TRACE: /trace/agent-naked.jsonl
       KAVACH_HTTP_TIMEOUT: ${KAVACH_HTTP_TIMEOUT:-20}

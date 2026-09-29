@@ -1,6 +1,6 @@
 """A deliberately ordinary refund agent. It knows nothing about Kavach.
 
-    python agent/agent.py --ticket 2 [--model mock|anthropic|openai]
+    python agent/agent.py --ticket 2 [--model mock|anthropic|openai|crusoe]
 
 Kavach contains it from the outside: proxy env vars, a sandbox network with
 no route out, stand-in API keys, and an eBPF policy on the host.
@@ -152,6 +152,10 @@ class Agent:
             final = self._run_anthropic(ticket_id)
         elif self.model == "openai":
             final = self._run_openai(ticket_id)
+        elif self.model == "crusoe":  # Crusoe Managed Inference, OpenAI-compatible
+            final = self._run_openai(ticket_id, prefix="CRUSOE",
+                                     default_base="https://api.inference.crusoecloud.com/v1",
+                                     default_model="Qwen/Qwen3.8-27B")
         else:
             raise ValueError(f"unknown model {self.model}")
         self.context.append(final)
@@ -190,10 +194,11 @@ class Agent:
             msgs.append({"role": "user", "content": results})
         return "stopped after 8 turns"
 
-    def _run_openai(self, ticket_id: str) -> str:
-        base = self.env.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-        model = self.env.get("OPENAI_MODEL", "gpt-4.1")
-        headers = {"authorization": f"Bearer {self.env.get('OPENAI_API_KEY', '')}"}
+    def _run_openai(self, ticket_id: str, prefix: str = "OPENAI",
+                    default_base: str = "https://api.openai.com/v1", default_model: str = "gpt-4.1") -> str:
+        base = (self.env.get(f"{prefix}_BASE_URL") or default_base).rstrip("/")
+        model = self.env.get(f"{prefix}_MODEL") or default_model
+        headers = {"authorization": f"Bearer {self.env.get(f'{prefix}_API_KEY', '')}"}
         tools = [{"type": "function", "function": {"name": t["name"], "description": t["description"],
                                                    "parameters": t["schema"]}} for t in TOOLS]
         msgs: list[dict] = [{"role": "system", "content": SYSTEM},

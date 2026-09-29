@@ -4,6 +4,9 @@ The Kavach stage demo, about 3 minutes (5 with the local-model steps). Each `##`
 step in the demo UI: the notes are what you say, the action is what **Run** does.
 Keys in the UI: `←` `→` change step, `Enter` runs the step, `N` hides these notes.
 
+Steps whose model isn't set up on the demo host are greyed out and skipped: the homelab runs the
+local Qwen (`openai`), the Crusoe host runs Crusoe's hosted Qwen (`crusoe`).
+
 Before you start: open the demo page, press `→` once and `Enter` on step 3 to warm the
 containers, then go back to step 1. Runs with Qwen take 30–90 s; the notes say what to talk about meanwhile.
 
@@ -74,6 +77,17 @@ but "more often" is a probability. Containment is for the run where the model do
 never sees a real card number either. That keeps the agent runtime out of PCI scope.
 
 **Point at** the card: nothing usable leaked, and the refund went through.
+
+## Swap in a hosted model
+<!-- action: contained ticket=2 model=crusoe -->
+**Say:** Now a hosted model: Qwen on Crusoe's managed inference. Same agent, same ticket, same
+policy file. The model is a setting, not a rewrite.
+
+**While it runs:** The agent only has a stand-in API key. The gateway swaps in the real Crusoe key,
+and only on calls to Crusoe. If the agent sent that stand-in anywhere else, the call would be blocked.
+
+**Point at** the Kavach lane (the key swap for `api.inference.crusoecloud.com`), then the card:
+nothing usable leaked, and the refund went through.
 
 ## The eval gate
 <!-- action: eval -->

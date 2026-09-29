@@ -5,12 +5,12 @@
 
 Serves the stage UI at /, the old trace viewer at /trace-view/, and a small JSON API:
 
-    GET  /api/script           SCRIPT.md parsed into steps
+    GET  /api/script           SCRIPT.md parsed into steps, plus the models this host can run
     GET  /api/tickets          the support tickets
-    POST /api/run              {"kind": "uncontained"|"contained"|"eval", "ticket": "2", "model": "mock"|"openai"}
+    POST /api/run              {"kind": "uncontained"|"contained"|"eval", "ticket": "2", "model": "mock"|"openai"|"crusoe"|...}
     GET  /api/events?since=N   the current run and its events after index N
 
-Only those three run kinds, known ticket ids and the two models are accepted: the page
+Only those three run kinds, known ticket ids and the models set up in this host's .env are accepted: the page
 never gets to choose a command. Standard library only, so it runs on the host's python3.
 """
 from __future__ import annotations
@@ -29,9 +29,31 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HERE = os.path.join(ROOT, "demo")
 TRACE = os.path.join(ROOT, "trace")
 TICKETS = {t["id"]: t for t in json.load(open(os.path.join(ROOT, "services", "tickets.json")))}
-MODELS = {"mock", "openai"}
 TRACE_FILES = ["agent.jsonl", "agent-naked.jsonl", "gateway.jsonl", "attacker.jsonl", "ebpf.jsonl"]
 NOISE = re.compile(r"^\s*(Container \S+ (Creating|Created|Starting|Started|Running|Waiting|Healthy)|\[\+\]|time=)")
+
+
+
+def host_models() -> dict[str, str]:
+    """Models this host can run, with display labels, from its .env (never served)."""
+    env: dict[str, str] = {}
+    try:
+        for line in open(os.path.join(ROOT, ".env"), encoding="utf-8"):
+            k, sep, v = line.strip().partition("=")
+            if sep and not k.startswith("#"):
+                env[k.strip()] = v.split(" #")[0].strip()
+    except FileNotFoundError:
+        pass
+    models = {"mock": "mock (always obeys)"}
+    base = env.get("OPENAI_BASE_URL", "")
+    if base and (env.get("OPENAI_API_KEY") or "api.openai.com" not in base):
+        models["openai"] = env.get("OPENAI_MODEL") or "OpenAI-compatible"
+    if env.get("CRUSOE_API_KEY"):
+        models["crusoe"] = (env.get("CRUSOE_MODEL") or "Qwen/Qwen3.8-27B") + " · Crusoe"
+    if env.get("ANTHROPIC_API_KEY"):
+        models["anthropic"] = env.get("ANTHROPIC_MODEL") or "Claude"
+    return models
+
 
 LOCK = threading.Lock()
 RUN: dict = {"id": 0, "status": "idle", "events": []}
@@ -128,8 +150,12 @@ def start_run(kind: str, ticket: str, model: str) -> tuple[int, dict]:
         return 400, {"error": "kind must be uncontained, contained or eval"}
     if kind != "eval" and ticket not in TICKETS:
         return 400, {"error": f"unknown ticket {ticket}"}
-    if model not in MODELS:
-        return 400, {"error": "model must be mock or openai"}
+    models = host_models()
+    if model not in models:
+        return 400, {"error": f"model {model} is not set up on this host (available: {', '.join(models)})"}
+    if kind == "uncontained" and model == "crusoe":
+        # The uncontained agent never gets the real Crusoe key: it is the one the attack succeeds against.
+        return 400, {"error": "crusoe runs only inside Kavach; the uncontained agent never gets the real key"}
     with LOCK:
         if RUN["status"] == "running":
             return 409, {"error": "a run is already in progress"}
@@ -162,7 +188,7 @@ def parse_script() -> dict:
             body = body.replace(m.group(0), "")
         steps.append({"title": title.strip(), "notes": body.strip(), "action": action, "ticket": show})
     title = re.search(r"^# (.+)$", intro, re.M)
-    return {"title": title.group(1) if title else "Kavach demo", "steps": steps}
+    return {"title": title.group(1) if title else "Kavach demo", "steps": steps, "models": host_models()}
 
 
 # ---------------------------------------------------------------------------
