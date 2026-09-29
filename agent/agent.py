@@ -1,6 +1,6 @@
 """A deliberately ordinary refund agent. It knows nothing about Kavach.
 
-    python agent/agent.py --ticket 2 [--model mock|anthropic|openai|crusoe]
+    python agent/agent.py --ticket 2 [--model mock|anthropic|openai|crusoe|openrouter]
 
 Kavach contains it from the outside: proxy env vars, a sandbox network with
 no route out, stand-in API keys, and an eBPF policy on the host.
@@ -152,6 +152,10 @@ class Agent:
             final = self._run_anthropic(ticket_id)
         elif self.model == "openai":
             final = self._run_openai(ticket_id)
+        elif self.model == "openrouter":  # OpenRouter: one OpenAI-compatible API, many models
+            final = self._run_openai(ticket_id, prefix="OPENROUTER",
+                                     default_base="https://openrouter.ai/api/v1",
+                                     default_model="openai/gpt-6-luna")
         elif self.model == "crusoe":  # Crusoe Managed Inference, OpenAI-compatible
             final = self._run_openai(ticket_id, prefix="CRUSOE",
                                      default_base="https://api.inference.crusoecloud.com/v1",

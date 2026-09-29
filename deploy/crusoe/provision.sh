@@ -6,8 +6,12 @@ say "host setup (scripts/setup-host.sh)"
 vm "cd $REMOTE_DIR && sudo apt-get install -y -qq tmux >/dev/null && sudo scripts/setup-host.sh 2>&1 | tail -12"
 
 say "bpftrace >= 0.16 (Ubuntu 22.04 ships 0.14)"
-vm "sudo curl -fsSL -o /usr/local/bin/bpftrace '$BPFTRACE_URL' && sudo chmod +x /usr/local/bin/bpftrace \
-    && sudo /usr/local/bin/bpftrace --version && sudo bpftrace -e 'BEGIN { exit(); }' >/dev/null && echo '  bpftrace works'"
+# The release binary is an AppImage; the VM has no FUSE, so extract it instead of mounting it.
+vm "set -e; sudo rm -rf /opt/bpftrace && sudo mkdir -p /opt/bpftrace && cd /opt/bpftrace \
+    && sudo curl -fsSL -o bpftrace.AppImage '$BPFTRACE_URL' && sudo chmod +x bpftrace.AppImage \
+    && sudo ./bpftrace.AppImage --appimage-extract >/dev/null \
+    && sudo ln -sf /opt/bpftrace/squashfs-root/AppRun /usr/local/bin/bpftrace \
+    && sudo bpftrace --version && sudo bpftrace -e 'BEGIN { exit(); }' >/dev/null && echo '  bpftrace works'"
 
 say "systemd: kavach-stack (compose services) and kavach-demo (stage UI on 127.0.0.1-reachable :$DEMO_PORT)"
 vm "sudo tee /etc/systemd/system/kavach-stack.service >/dev/null" <<UNIT

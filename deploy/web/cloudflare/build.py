@@ -149,6 +149,7 @@ footer .inner {{ max-width: 1120px; margin: 0 auto; padding: 24px 16px; display:
       <a class="btn primary" href="{repo_url}" rel="noopener">View on GitHub</a>
       <a class="btn slides" href="{slides_url}">Demo presentation</a>
       <a class="btn" href="{doc_url}" rel="noopener">Open the live doc</a>
+      <a class="btn" href="/matrix/">Model matrix: which models fall for which attacks</a>
       <a class="btn demo" href="{demo_url}" rel="noopener">Run the live demo <span>tailnet only</span></a>
     </div>
   </div>

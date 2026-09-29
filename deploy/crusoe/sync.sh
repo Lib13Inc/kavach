@@ -25,5 +25,5 @@ ENV
 if vm "command -v docker >/dev/null"; then
   say "rebuild agent images, restart stack and demo UI"
   vm "cd $REMOTE_DIR && sudo docker compose --profile contained --profile uncontained build -q \
-      && sudo systemctl restart kavach-stack; sudo systemctl try-restart kavach-demo 2>/dev/null || true"
+      && sudo systemctl try-restart kavach-stack kavach-demo 2>/dev/null || true"
 fi
