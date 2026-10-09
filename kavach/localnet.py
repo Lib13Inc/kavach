@@ -9,6 +9,7 @@ them and the eBPF policy logs and kills the process).
 from __future__ import annotations
 
 import json
+import time
 from urllib.parse import urlsplit
 
 from .gateway import Gateway
@@ -34,19 +35,30 @@ class InProcessNet:
                 headers: dict | None = None) -> tuple[int, str]:
         text = json.dumps(body) if body is not None else ""
         host = (urlsplit(url).hostname or "").lower()
+        orig_url, orig_headers, orig_text, t0 = url, headers or {}, text, time.time()
+        d = None
         if self.gw is not None:
-            d = self.gw.on_request(method, host, url, headers or {}, text)
+            d = self.gw.on_request(method, host, url, orig_headers, text)
             if not d.allow:
-                return 403, json.dumps({"blocked_by": "kavach", "reason": d.reason})
+                reply = json.dumps({"blocked_by": "kavach", "reason": d.reason})
+                self.gw.record_wire(method, host, orig_url, orig_headers, orig_text, d, status=403,
+                                    agent_reply=reply, ms=(time.time() - t0) * 1000)
+                return 403, reply
             url, text = d.url, d.body
         handler = self._route(host)
         if handler is None:
+            if d is not None:
+                self.gw.record_wire(method, host, orig_url, orig_headers, orig_text, d, status=0,
+                                    agent_reply=f"network error: cannot resolve {host}")
             return 0, f"network error: cannot resolve {host}"
         parts = urlsplit(url)
         path = parts.path + (("?" + parts.query) if parts.query else "")
         status, resp = handler(method, path, text)
         if self.gw is not None:
-            resp = self.gw.on_response(host, resp)
+            seen = self.gw.on_response(host, resp)
+            self.gw.record_wire(method, host, orig_url, orig_headers, orig_text, d, status=status,
+                                upstream_reply=resp, agent_reply=seen, ms=(time.time() - t0) * 1000)
+            resp = seen
         return status, resp
 
     def raw_send(self, host: str, port: int, data: str) -> str:

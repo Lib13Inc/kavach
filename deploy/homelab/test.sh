@@ -47,6 +47,22 @@ grep -q ebpf_connect_denied /tmp/guard.log && pass "eBPF denied the raw connect(
 [[ $rc == 137 ]] && pass "agent killed on violation (exit 137)" || bad "agent not killed (exit $rc)"
 leaked && bad "raw socket leaked a card" || pass "raw socket leaked nothing"
 
+if command -v openshell >/dev/null && openshell status >/dev/null 2>&1; then
+  echo "== OpenShell sandbox: ticket 5, agent inside a real OpenShell sandbox, Kavach gateway as its only way out"
+  fresh
+  out=$(.venv/bin/python -m kavach.cli openshell up --image kavach-agent --ticket 5 --model mock 2>&1)
+  echo "$out" | grep -q 'refund.*succeeded' && pass "refund succeeded from inside the OpenShell sandbox" || bad "no refund from the OpenShell sandbox"
+  grep -q '"decision": "rewritten"' trace/wire.jsonl 2>/dev/null && pass "wire log: token swapped for the card at payments" || bad "no rewritten exchange in the wire log"
+  leaked && bad "OpenShell run leaked a card" || pass "OpenShell run: attacker got no real card"
+  sleep 4   # supervisor logs reach the gateway a moment after the sandbox exits
+  logs=$(openshell logs kavach-demo --source sandbox 2>&1; openshell logs kavach-agent --source sandbox 2>&1)
+  echo "$logs" | grep -q 'NET:OPEN \[INFO\] ALLOWED .*host.openshell.internal:8080' && pass "OCSF: traffic to the Kavach gateway allowed" || bad "no ALLOWED OCSF event"
+  echo "$logs" | grep -q 'NET:OPEN \[MED\] DENIED .*172.28.0.66:9999' && pass "OCSF: raw socket denied by OpenShell" || bad "no DENIED OCSF event"
+  openshell sandbox delete kavach-agent >/dev/null 2>&1
+else
+  echo "  info  openshell not installed or gateway down; skipping the OpenShell checks"
+fi
+
 echo; [[ $fail == 0 ]] && echo "ALL CHECKS PASSED" || echo "SOME CHECKS FAILED"
 exit $fail
 REMOTE

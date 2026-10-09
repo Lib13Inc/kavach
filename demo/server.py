@@ -7,10 +7,10 @@ Serves the stage UI at /, the old trace viewer at /trace-view/, and a small JSON
 
     GET  /api/script           SCRIPT.md parsed into steps, plus the models this host can run
     GET  /api/tickets          the support tickets
-    POST /api/run              {"kind": "uncontained"|"contained"|"eval", "ticket": "2", "model": "mock"|"openai"|"crusoe"|...}
+    POST /api/run              {"kind": "uncontained"|"contained"|"eval"|"openshell"|"openshell-replay", "ticket": "2", "model": "mock"|"openai"|"crusoe"|...}
     GET  /api/events?since=N   the current run and its events after index N
 
-Only those three run kinds, known ticket ids and the models set up in this host's .env are accepted: the page
+Only those run kinds, known ticket ids and the models set up in this host's .env are accepted: the page
 never gets to choose a command. Standard library only, so it runs on the host's python3.
 """
 from __future__ import annotations
@@ -29,8 +29,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HERE = os.path.join(ROOT, "demo")
 TRACE = os.path.join(ROOT, "trace")
 TICKETS = {t["id"]: t for t in json.load(open(os.path.join(ROOT, "services", "tickets.json")))}
-TRACE_FILES = ["agent.jsonl", "agent-naked.jsonl", "gateway.jsonl", "attacker.jsonl", "ebpf.jsonl"]
-NOISE = re.compile(r"^\s*(Container \S+ (Creating|Created|Starting|Started|Running|Waiting|Healthy)|\[\+\]|time=)")
+TRACE_FILES = ["agent.jsonl", "agent-naked.jsonl", "gateway.jsonl", "wire.jsonl", "attacker.jsonl", "ebpf.jsonl", "openshell.jsonl"]
+KINDS = {"uncontained", "contained", "eval", "openshell", "openshell-replay"}
+NOISE = re.compile(r"^\s*(#\d+ |Image \S+ (Building|Built)|Container \S+ (Creating|Created|Starting|Started|Running|Waiting|Healthy)|\[\+\]|time=)")
 
 
 
@@ -69,10 +70,32 @@ def _add(ev: dict) -> None:
         RUN["events"].append(ev)
 
 
+def _py() -> str:
+    py = os.path.join(ROOT, ".venv", "bin", "python")
+    return py if os.path.exists(py) else "python3"
+
+
+def openshell_available() -> bool:
+    import shutil
+    return shutil.which("openshell") is not None
+
+
+def openshell_ready() -> bool:
+    """The OpenShell gateway restarts with Docker and takes ~40 s to come back; `openshell status` says when."""
+    try:
+        return subprocess.run(["openshell", "status"], capture_output=True, timeout=15).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def _command(kind: str, ticket: str, model: str) -> list[str]:
     if kind == "eval":
-        py = os.path.join(ROOT, ".venv", "bin", "python")
-        return [py if os.path.exists(py) else "python3", "-m", "kavach.cli", "eval"]
+        return [_py(), "-m", "kavach.cli", "eval"]
+    if kind == "openshell-replay":
+        return [_py(), "-m", "kavach.cli", "openshell", "replay", "--ticket", ticket, "--model", model]
+    if kind == "openshell":  # the agent runs inside an OpenShell sandbox; the Kavach gateway stays in compose
+        return [_py(), "-m", "kavach.cli", "openshell", "up", "--ticket", ticket, "--model", model,
+                "--name", "kavach-demo", "--image", os.environ.get("KAVACH_OPENSHELL_IMAGE", "kavach-agent")]
     profile, svc = ("uncontained", "agent-naked") if kind == "uncontained" else ("contained", "agent")
     return ["docker", "compose", "--profile", profile, "run", "--rm", "-T", svc,
             "python", "agent/agent.py", "--ticket", ticket, "--model", model]
@@ -119,6 +142,10 @@ def _run(run_id: int, kind: str, ticket: str, model: str) -> None:
     tailer.start()
 
     guard = None
+    follower = None
+    if kind == "openshell":
+        follower = subprocess.Popen([_py(), "-m", "kavach.cli", "openshell", "logs", "--name", "kavach-demo"],
+                                    cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if kind == "contained":
         # The host-side eBPF guard attaches to the agent container as soon as it appears.
         guard = subprocess.Popen(["sudo", "-n", os.path.join(ROOT, "ebpf", "guard.sh")], cwd=ROOT,
@@ -126,14 +153,22 @@ def _run(run_id: int, kind: str, ticket: str, model: str) -> None:
         _add({"source": "demo", "kind": "guard_armed", "detail": "eBPF guard waiting for the agent container"})
 
     cmd = _command(kind, ticket, model)
-    _add({"source": "demo", "kind": "command", "detail": " ".join(cmd[:4] + ["…"] + cmd[-4:]) if kind != "eval" else "kavach eval"})
+    _add({"source": "demo", "kind": "command", "detail": " ".join(cmd[:4] + ["…"] + cmd[-4:]) if kind not in ("eval", "openshell-replay") else f"kavach {kind}"})
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     for line in proc.stdout:
         line = line.rstrip()
-        if line and not NOISE.search(line):
+        if line.startswith("@@kavach "):  # agent events from a sandbox with no shared volume
+            try:
+                _add({**json.loads(line[9:]), "file": "agent"})
+            except ValueError:
+                pass
+        elif line and not NOISE.search(line):
             _add({"source": "console", "kind": "output", "text": line})
     code = proc.wait()
 
+    if follower:
+        time.sleep(1.5)
+        follower.terminate()
     if guard:
         time.sleep(0.8)
         subprocess.run(["sudo", "-n", "pkill", "-x", "bpftrace"], check=False)
@@ -146,8 +181,12 @@ def _run(run_id: int, kind: str, ticket: str, model: str) -> None:
 
 
 def start_run(kind: str, ticket: str, model: str) -> tuple[int, dict]:
-    if kind not in {"uncontained", "contained", "eval"}:
-        return 400, {"error": "kind must be uncontained, contained or eval"}
+    if kind not in KINDS:
+        return 400, {"error": "kind must be one of " + ", ".join(sorted(KINDS))}
+    if kind == "openshell" and not openshell_available():
+        return 400, {"error": "the openshell CLI is not installed on this host (see docs/openshell.md)"}
+    if kind == "openshell" and not openshell_ready():
+        return 503, {"error": "the OpenShell gateway is not reachable yet (it takes ~40 s after the host restarts Docker); try again"}
     if kind != "eval" and ticket not in TICKETS:
         return 400, {"error": f"unknown ticket {ticket}"}
     models = host_models()
@@ -188,7 +227,8 @@ def parse_script() -> dict:
             body = body.replace(m.group(0), "")
         steps.append({"title": title.strip(), "notes": body.strip(), "action": action, "ticket": show})
     title = re.search(r"^# (.+)$", intro, re.M)
-    return {"title": title.group(1) if title else "Kavach demo", "steps": steps, "models": host_models()}
+    return {"title": title.group(1) if title else "Kavach demo", "steps": steps, "models": host_models(),
+            "capabilities": {"openshell": openshell_available()}}
 
 
 # ---------------------------------------------------------------------------

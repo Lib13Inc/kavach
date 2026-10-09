@@ -273,7 +273,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <p class="kicker">Kavach · कवच · "armor"</p>
   <h1>The model is not the<br><span>security boundary.</span></h1>
   <p class="lede">Kavach wraps any AI agent in a sandbox, a policy gateway and a secrets vault, from one config file and one command.</p>
-  <div class="meta"><span class="oss">Open source</span><span>Team Kavach</span><span>Hackathon demo · Sep 29, 2026</span><span>kavach.lib13.com</span></div>
+  <div class="meta"><span class="oss">Open source</span><span>Team Kavach</span><span>Hackathon demo · Oct 9, 2026</span><span>kavach.lib13.com</span></div>
   <aside class="notes" data-time="0:20">
     <p><b>Say:</b> Hi, we're Team Kavach. Kavach means armor in Hindi.</p>
 <p><b>Say:</b> One line to remember: the model is not the security boundary. Kavach wraps any AI agent in a sandbox, a policy gateway and a secrets vault, from one config file and one command. And it's open source.</p>
@@ -439,7 +439,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
 <!-- 8b · The CLI -->
 <section class="slide">
   <p class="kicker">The whole interface</p>
-  <h2 style="margin-bottom:20px">Four commands. No SDK, no agent rewrite.</h2>
+  <h2 style="margin-bottom:20px">A few commands. No SDK, no agent rewrite.</h2>
   <div class="row grow">
     <div style="flex:1.55;min-width:0">
 <pre class="term" style="font-size:14px"><span class="p">$</span> <span class="cmd">kavach demo --ticket 2</span>            <span class="c"># no Docker: both runs, narrated</span>
@@ -452,23 +452,24 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
 
 <span class="p">$</span> <span class="cmd">kavach run --uncontained --ticket 2</span>  <span class="c"># full stack, today's agent</span>
 <span class="p">$</span> <span class="cmd">kavach run --ticket 2</span>                <span class="c"># + gateway, vault, eBPF</span>
-<span class="p">$</span> <span class="cmd">kavach run --ticket 2 --model crusoe</span> <span class="c"># swap the model, same policy</span>
+<span class="p">$</span> <span class="cmd">kavach run --ticket 2 --model openai</span> <span class="c"># a local Ollama model, same policy</span>
+<span class="p">$</span> <span class="cmd">kavach openshell compile</span>            <span class="c"># same policy, NVIDIA OpenShell sandbox</span>
+<span class="p">$</span> <span class="cmd">kavach policy lint</span>                   <span class="c"># Kyverno-style CI check</span>
 <span class="p">$</span> <span class="cmd">kavach eval</span>                          <span class="c"># 10 attacks, both ways</span>
-<span class="s">10/10 cases pass the gate</span>
-<span class="p">$</span> <span class="cmd">kavach matrix --runs 3 --cap 10</span>      <span class="c"># 10 real models × 10 attacks</span></pre>
+<span class="s">10/10 cases pass the gate</span></pre>
     </div>
     <div class="verbs" style="flex:1">
       <div class="card"><code class="v">demo</code><p>Both runs side by side on a laptop. No Docker, two minutes.</p></div>
       <div class="card"><code class="v">run</code><p>Contain an agent with <code class="i">--policy</code>. Add <code class="i">--uncontained</code> to see it without Kavach.</p></div>
       <div class="card"><code class="v">eval</code><p>Prove it. Nonzero exit on any leak, so CI blocks the release.</p></div>
-      <div class="card"><code class="v">matrix</code><p>Every attack against real models via OpenRouter, both ways, with a spend cap.</p></div>
+      <div class="card"><code class="v">openshell</code><p>Compile the same policy for NVIDIA OpenShell, tail its logs into the wire log.</p></div>
       <div class="card" style="border-style:dashed"><p><strong style="color:var(--text)">Where it's going:</strong> wrap any process, like <code class="i">docker run</code> wraps any image.</p>
         <p style="margin-top:8px;font:500 13.5px 'JetBrains Mono',monospace;color:var(--accent);white-space:nowrap">kavach run --policy mh.yaml -- python agent.py</p></div>
     </div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · the CLI</span></div>
   <aside class="notes" data-time="0:25">
-    <p><b>Say:</b> And the whole interface is four commands. <code>demo</code> runs both versions on a laptop with no Docker. <code>run</code> contains an agent under a policy, and <code>--uncontained</code> shows what happens without us. <code>eval</code> is the CI gate: nonzero exit on any leak. <code>matrix</code> throws every attack at real models from ten vendors through OpenRouter, with and without Kavach, and stops at a dollar cap.</p>
+    <p><b>Say:</b> And the whole interface is a handful of commands. <code>demo</code> runs both versions on a laptop with no Docker. <code>run</code> contains an agent under a policy, and <code>--uncontained</code> shows what happens without us. <code>eval</code> is the CI gate: nonzero exit on any leak. <code>matrix</code> throws every attack at real models from ten vendors through OpenRouter, with and without Kavach, and stops at a dollar cap.</p>
 <p><b>Be precise:</b> today's CLI runs the refund agent in the repo. Wrapping any process, like <code>docker run</code>, is where it's going.</p>
   </aside>
 </section>
@@ -480,19 +481,19 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="flow">
     <div class="box">
       <h3>Agent sandbox</h3>
-      <ul><li>Docker <code class="i">internal: true</code> net</li><li>Read-only, no caps, PID cap</li><li>Holds <b>tokens</b> and <b>stand-in keys</b></li><li>Any model: mock, Qwen, Claude, GPT</li></ul>
+      <ul><li>Docker <code class="i">internal: true</code> net</li><li>Read-only, no caps, PID cap</li><li>Holds <b>tokens</b> and <b>stand-in keys</b></li><li>Any model: mock, local Llama, Claude, GPT</li></ul>
     </div>
     <div class="arrow">→</div>
     <div class="box gw">
       <h3>Kavach gateway</h3>
-      <ul><li>mitmproxy + Kavach add-on (TLS inspect)</li><li>Exact-host egress allowlist</li><li>PAN → token on the way <b>in</b></li><li>token → PAN only to the processor</li><li>stand-in → real key only to its provider</li><li>JSONL trace of every decision</li></ul>
+      <ul><li>mitmproxy + Kavach add-on (TLS inspect)</li><li>Exact-host egress allowlist</li><li>PAN → token on the way <b>in</b></li><li>token → PAN only to the processor</li><li>stand-in → real key only to its provider</li><li><b>Wire log</b> of every request, both views</li></ul>
     </div>
     <div class="arrow">→</div>
     <div class="box">
       <h3>Outside world</h3>
-      <ul><li><code class="i">tickets.internal</code></li><li><code class="i">payments.internal</code></li><li>Crusoe · OpenRouter · Anthropic APIs</li><li><span class="accent">attacker.example ✕</span></li></ul>
+      <ul><li><code class="i">tickets.internal</code></li><li><code class="i">payments.internal</code></li><li>Ollama (local) · OpenRouter · Anthropic APIs</li><li><span class="accent">attacker.example ✕</span></li></ul>
     </div>
-    <div class="box ebpf"><b>eBPF guard on the host</b> <span class="muted">· watches <code class="i">connect()</code> from the agent's cgroup · anything not to the proxy or DNS is logged and the process is killed</span></div>
+    <div class="box ebpf"><b>eBPF guard on the host</b> <span class="muted">· watches <code class="i">connect()</code> from the agent's cgroup · anything not to the proxy or DNS is logged and the process is killed. Or swap the whole sandbox for <b>NVIDIA OpenShell</b>.</span></div>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Tech stack · architecture</span></div>
   <aside class="notes" data-time="0:30">
@@ -513,10 +514,11 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
       <tr><td>eBPF · bpftrace</td><td>A kernel-level <code class="i">connect()</code> guard scoped to one container's cgroup</td><td class="dim">The raw-socket attack walks around any proxy. The guest can't see or unload a host probe.</td></tr>
       <tr><td>mitmproxy</td><td>A TLS-inspecting gateway in a 55-line add-on</td><td class="dim">Token and key swaps on HTTPS model calls, in one day, without writing a proxy</td></tr>
       <tr><td>Docker networks</td><td><code class="i">internal: true</code> sandbox whose only route is the gateway</td><td class="dim">Allowlisting that holds even if the agent ignores <code class="i">HTTP_PROXY</code></td></tr>
-      <tr><td>Crusoe Cloud</td><td>Managed Inference (Qwen3.8-27B, OpenAI-compatible) + a $0.16/hr VM running the whole stack</td><td class="dim">A real hosted model behind a swapped key, on a real Linux kernel with BTF for eBPF</td></tr>
-      <tr><td>OpenRouter</td><td>One OpenAI-compatible API, one stand-in key, ten vendors' models (plus local Qwen3 30B on a homelab box)</td><td class="dim">Testing containment across Claude, GPT, Gemini, Grok, Llama, Qwen, GLM, Kimi, DeepSeek and Mistral in one run</td></tr>
+      <tr><td>NVIDIA OpenShell</td><td>An alternative sandbox: Landlock, seccomp and a supervisor that checks every connection. Kavach compiles its policy to OpenShell's and reads its OCSF logs</td><td class="dim">Kernel isolation we don't have to build, on a CNCF project, with Kavach's token vault on top</td></tr>
+      <tr><td>Ollama</td><td>A local open model on the demo laptop, behind the same gateway and stand-in key</td><td class="dim">Running real-model steps with no cloud account and no card number leaving the machine</td></tr>
+      <tr><td>OpenRouter</td><td>One OpenAI-compatible API, one stand-in key, ten vendors' models</td><td class="dim">Testing containment across Claude, GPT, Gemini, Grok, Llama, Qwen, GLM, Kimi, DeepSeek and Mistral in one run</td></tr>
       <tr><td>Python vault</td><td>Luhn-checked PAN detection, format-preserving tokens</td><td class="dim">Refunds that succeed while the agent never sees a card</td></tr>
-      <tr><td>Tailscale · Cloudflare</td><td>Private HTTPS for the stage UI; this site on Workers static assets</td><td class="dim">A demo UI that can start runs, never exposed publicly</td></tr>
+      <tr><td>Kyverno ideas</td><td>Audit vs. enforce, expiring exceptions, PolicyReport output, CEL policy lint</td><td class="dim">Policy that can be rolled out gradually, waived with an owner, and checked in CI</td></tr>
       <tr><td>Claude Code</td><td>Pair-built gateway, evals, deploy scripts and this deck</td><td class="dim">Five layers of plumbing in one hackathon day</td></tr>
     </tbody>
   </table>
@@ -524,7 +526,7 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <div class="foot"><span>Team Kavach</span><span>Tech stack</span></div>
   <aside class="notes" data-time="0:35">
     <p><b>Say:</b> What each piece made possible. eBPF is the one we couldn't do without: a proxy alone can be bypassed with a raw socket, and only a kernel hook on the host catches that.</p>
-<p><b>Say:</b> mitmproxy gave us TLS inspection in a 55-line add-on. Crusoe gave us two things: a hosted open model behind an OpenAI-compatible API, so the key swap runs against a real provider, and a cheap VM with a real kernel for eBPF. OpenRouter let us put ten vendors' models behind one stand-in key for the matrix. And we built it with Claude Code in a day.</p>
+<p><b>Say:</b> mitmproxy gave us TLS inspection in a 55-line add-on. NVIDIA OpenShell is the second sandbox backend: it does the kernel isolation, and Kavach adds the card vault and the wire log. Ollama let us run a real model on the laptop with no cloud account. And from Kyverno we borrowed the policy-management ideas, not the Kubernetes parts.</p>
   </aside>
 </section>
 
@@ -542,26 +544,27 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
 
 <!-- 11 · Run of show -->
 <section class="slide">
-  <p class="kicker">Run of show · about 5 minutes</p>
-  <h2>Six beats, live on the stage UI</h2>
+  <p class="kicker">Run of show · about 6 minutes</p>
+  <h2 style="margin-bottom:20px">Eight beats, live on the stage UI</h2>
   <ol class="steps">
-    <li><b>1</b><div>Run it uncontained<span>Mock model, real card, open internet: the attacker gets the PAN</span></div></li>
-    <li><b>2</b><div>Same agent, inside Kavach<span>Card becomes a token; POST to attacker blocked; refund succeeds</span></div></li>
-    <li><b>3</b><div>Go around the gateway<span>Raw socket to 172.28.0.66:9999; eBPF kills the process</span></div></li>
-    <li><b>4</b><div>A real model takes the bait<span>Qwen3 30B, uncontained, leaks the card too</span></div></li>
-    <li><b>5</b><div>Swap in a hosted model<span>Crusoe Qwen; stand-in key swapped only for Crusoe's host</span></div></li>
-    <li><b>6</b><div>The eval gate<span>10 attacks × uncontained vs. Kavach, the check CI blocks on</span></div></li>
+    <li><b>1</b><div>Uncontained<span>Mock model, real card, open internet: the attacker gets the PAN</span></div></li>
+    <li><b>2</b><div>Inside Kavach<span>Card becomes a token; POST to attacker blocked; refund succeeds</span></div></li>
+    <li><b>3</b><div>See every byte<span>The wire log: what the agent sent vs. what left the sandbox</span></div></li>
+    <li><b>4</b><div>Go around the gateway<span>Raw socket to 172.28.0.66:9999; eBPF kills the process</span></div></li>
+    <li><b>5</b><div>A real local model<span>Llama via Ollama, uncontained, then inside Kavach</span></div></li>
+    <li><b>6</b><div>The same sandbox on OpenShell<span>One policy file, OpenShell's audit events in the same timeline</span></div></li>
+    <li><b>7</b><div>Policy hygiene<span>Audit mode, exceptions, lint and reports, borrowed from Kyverno</span></div></li>
+    <li><b>8</b><div>The eval gate<span>10 attacks × uncontained vs. Kavach, the check CI blocks on</span></div></li>
   </ol>
-  <div class="row" style="margin-top:28px;align-items:center">
-    <a class="btn" href="https://kavach-demo.bettong-beta.ts.net/" rel="noopener">Open the live demo →</a>
-    <span class="muted" style="font-size:15px">Tailnet only. Offline fallback: <code class="i">bin/kavach demo --ticket 2</code></span>
+  <div class="row" style="margin-top:22px;align-items:center">
+    <span class="muted" style="font-size:16px">Run it: <code class="i">python3 demo/server.py</code>, open <code class="i">localhost:8088</code>. Offline fallback: <code class="i">bin/kavach demo --ticket 2</code></span>
   </div>
   <div class="foot"><span>Team Kavach</span><span>Live demo</span></div>
   <aside class="notes" data-time="4:00">
-    <p><b>Do:</b> switch to the live demo tab. Keys there: ← → steps, Enter runs, N hides its notes.</p>
-<p><b>Beats:</b> (1) uncontained, attacker gets the card. (2) inside Kavach, token, blocked, refund still succeeds. (3) raw socket, eBPF kills it. (4) real Qwen takes the bait. (5) Crusoe-hosted model, stand-in key swapped only for Crusoe. (6) eval gate, 10 of 10.</p>
-<p><b>While a real model thinks (30–90 s):</b> the model provider never sees a real card either, because model calls go through the gateway too. That keeps the agent runtime out of PCI scope.</p>
-<p><b>Fallback if the tailnet is down:</b> run <code>bin/kavach demo --ticket 2</code> locally, then use the next slide.</p>
+    <p><b>Do:</b> switch to the demo tab. Keys there: ← → steps, Enter runs, L flips lanes and wire log, N hides its notes.</p>
+<p><b>Beats:</b> (1) uncontained, attacker gets the card. (2) inside Kavach, token, blocked, refund still succeeds. (3) wire log: click the payment call, token on the left, masked card on the right. (4) raw socket, eBPF kills it. (5) a local Llama model through Ollama; it may well refuse, which is the point about probability. (6) same policy on OpenShell: live on the homelab, a labeled replay elsewhere. (7) Kyverno ideas. (8) eval gate, 10 of 10.</p>
+<p><b>While a local model thinks (20-60 s):</b> the model provider never sees a real card either, because model calls go through the gateway too. Open the model call in the wire log and read the prompt.</p>
+<p><b>Fallback:</b> run <code>bin/kavach demo --ticket 2</code> locally, then use the next slide.</p>
   </aside>
 </section>
 
@@ -593,6 +596,103 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   </aside>
 </section>
 
+<!-- 12b · Wire log -->
+<section class="slide">
+  <p class="kicker">New · the wire log</p>
+  <h2 style="margin-bottom:18px">Every request, both views, in the UI</h2>
+  <div class="row grow">
+    <div style="flex:1.2;min-width:0">
+<pre class="term" style="font-size:13px"><span class="c">  time   verdict    request                         status</span>
+  +0.00s <span class="s">ALLOWED</span>    GET  tickets.internal/tickets/2    200
+  +0.01s <span class="k">REWRITTEN</span> POST payments.internal/v1/refunds  200
+  +0.02s <span class="k" style="color:var(--bad)">BLOCKED</span>   POST attacker.example/collect      403
+  +0.40s <span class="n">OPENSHELL</span>  NET:OPEN denied 172.28.0.66:9999  MED
+
+<span class="c">POST payments.internal/v1/refunds</span>
+<span class="c">  agent sent        </span>{"card":"<span class="k">tok_4242_c8bde9_4242</span>", ...}
+<span class="c">  left the sandbox  </span>{"card":"<span class="s">424242******4242</span>", ...}
+<span class="c">  rule              </span>cardholder_data.release_to</pre>
+    </div>
+    <div class="side" style="flex:1">
+      <p><strong>One row per request</strong> through the gateway, with a verdict, the policy rule that decided it, and what Kavach rewrote.</p>
+      <p><strong>Two views of the same call.</strong> The agent's side shows tokens and stand-in keys. The outbound side shows the real values, <em>masked in the log</em> (first six, last four; keys as <code class="i">[REAL:NAME]</code>).</p>
+      <p><strong>Model calls are in it too</strong>, so you can read the exact prompt a model received.</p>
+      <p><strong>Uncontained runs have no wire log.</strong> Nothing was watching.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Team Kavach</span><span>Live demo · wire log</span></div>
+  <aside class="notes" data-time="0:40">
+    <p><b>Say:</b> New in this version: because every call crosses the gateway, we keep a ledger of all of it. This is the audit trail, and it's what you hand a security reviewer.</p>
+    <p><b>Point at</b> the payment call: on the left the agent sent a token; on the right the real card left the sandbox, masked in the log so the log itself is safe to keep. The blocked POST to the attacker shows nothing left the sandbox.</p>
+    <p><b>Say:</b> It's live in the demo UI. Press L to flip between the lanes and the wire log.</p>
+  </aside>
+</section>
+
+<!-- 12c · OpenShell -->
+<section class="slide">
+  <p class="kicker">New · a second sandbox backend</p>
+  <h2 style="margin-bottom:18px">Kavach on NVIDIA OpenShell</h2>
+  <div class="row grow">
+    <div style="flex:1.05;min-width:0">
+      <p class="file">$ kavach openshell compile  →  policy/openshell/payments-gateway.yaml</p>
+<pre><span class="k">version</span>: <span class="n">1</span>
+<span class="k">landlock</span>: {compatibility: hard_requirement}
+<span class="k">process</span>: {run_as_user: sandbox}
+<span class="k">network_policies</span>:
+  <span class="k">kavach_gateway</span>:               <span class="c"># the only way out</span>
+    <span class="k">endpoints</span>:
+      - {host: host.openshell.internal,
+         port: <span class="n">8080</span>, protocol: tcp}
+    <span class="k">binaries</span>: [{path: /usr/local/bin/python3.12}]</pre>
+      <p class="muted" style="font-size:15px;margin-top:10px">Also <code class="i">--mode native</code>: OpenShell enforces the allowlist per host, with its own credential providers.</p>
+    </div>
+    <div class="side" style="flex:1">
+      <p><strong>Division of labor.</strong> OpenShell (a CNCF project) does isolation: Landlock, seccomp, a supervisor that checks every connection. Kavach adds what it lacks: card tokenization, the wire log, evals, vertical packs.</p>
+      <p><strong>Same timeline.</strong> OpenShell's OCSF audit events (<code class="i">NET:OPEN DENIED …</code>) are parsed into the wire log next to the gateway's.</p>
+      <p><strong>Tested live</strong> on the homelab with OpenShell 0.1.3: the agent runs in a real sandbox, Qwen included, and OpenShell's own events land in the wire log. Native mode is not run live yet, and the stage fallback is a labeled replay.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack · OpenShell</span></div>
+  <aside class="notes" data-time="0:45">
+    <p><b>Say:</b> Kavach doesn't have to own the sandbox. NVIDIA's OpenShell, now a CNCF project, runs agents with Landlock, seccomp and a supervisor that checks every outbound connection. <code>kavach openshell compile</code> turns our policy into an OpenShell policy whose only allowed destination is the Kavach gateway.</p>
+    <p><b>Say:</b> OpenShell does the isolation. Kavach adds the part it doesn't have: tokenizing card numbers, and the per-request ledger. Its audit events land in the same wire log.</p>
+    <p><b>Say:</b> We ran this live on the homelab with OpenShell 0.1.3: the agent in a real sandbox, the Qwen model through the same path. Running it live also found four real bugs we fixed.</p>
+    <p><b>Be precise:</b> native mode, where OpenShell enforces the allowlist itself, is not run live yet. Where OpenShell isn't installed, the demo step is a replay, and the UI badge says so.</p>
+  </aside>
+</section>
+
+<!-- 12d · Kyverno -->
+<section class="slide">
+  <p class="kicker">New · ideas borrowed from Kyverno</p>
+  <h2 style="margin-bottom:18px">Policy you can roll out, waive, and check</h2>
+  <div class="grid2 grow">
+    <div>
+      <p class="file">policy/*.yaml</p>
+<pre><span class="k">egress</span>:
+  <span class="k">mode</span>: <span class="s">audit</span>       <span class="c"># or enforce (default)</span>
+<span class="k">exceptions</span>:
+  - <span class="k">name</span>: partner-sandbox-demo
+    <span class="k">hosts</span>: [sandbox.partner.example]
+    <span class="k">owner</span>: vaibhav
+    <span class="k">reason</span>: one-week integration test
+    <span class="k">expires</span>: <span class="n">2026-10-16</span></pre>
+      <p class="muted" style="font-size:15px;margin-top:8px">Lint rejects an exception with no owner, reason or expiry, or longer than 30 days.</p>
+    </div>
+    <div class="side">
+      <p><strong>Audit vs. enforce.</strong> Roll a new rule out in audit: violations are logged, not blocked. Flip to enforce when the log is clean.</p>
+      <p><strong>Exceptions.</strong> Narrow, owned, expiring. A stolen-key misuse can never be waived.</p>
+      <p><strong>Reports.</strong> <code class="i">kavach policy report</code> turns a trace into a PolicyReport, so Kyverno tooling can read it.</p>
+      <p><strong>Lint in CI.</strong> <code class="i">kavach policy lint</code>, and the same rules as a Kyverno CEL policy.</p>
+      <p class="muted" style="font-size:15px"><b>Not borrowed:</b> admission control, mutate/generate on resources, image verification. Those are Kubernetes-shaped.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Team Kavach</span><span>Tech stack · policy</span></div>
+  <aside class="notes" data-time="0:35">
+    <p><b>Say:</b> We looked at Kyverno for ideas. The Kubernetes parts don't fit, but four policy-management ideas do: audit versus enforce, exceptions with an owner and an expiry, reports for every decision, and linting policy in CI.</p>
+    <p><b>Be precise:</b> the Python lint is tested. The matching Kyverno CEL policy is written but we haven't run it through the Kyverno CLI.</p>
+  </aside>
+</section>
+
 <!-- 13 · Code: policy -->
 <section class="slide">
   <p class="kicker">Code · 1 of 4</p>
@@ -604,14 +704,14 @@ pre .hl { background: rgba(251,146,60,.16); display: inline-block; width: 100%; 
   <span class="k">allow_hosts</span>:                     <span class="c"># exact match; all else 403</span>
     - tickets.internal
     - payments.internal
-    - api.inference.crusoecloud.com
+    - host.docker.internal        <span class="c"># Ollama on this machine</span>
 <span class="k">cardholder_data</span>:
   <span class="k">tokenize_responses_from</span>: [tickets.internal]
   <span class="hl"><span class="k">release_to</span>: [payments.internal]      <span class="c"># only place a real PAN goes</span></span>
 <span class="k">secrets</span>:
-  <span class="k">CRUSOE_API_KEY</span>:
-    <span class="k">standin</span>: <span class="s">sk-kavach-standin-crusoe</span>
-    <span class="hl"><span class="k">release_to</span>: [api.inference.crusoecloud.com]</span>
+  <span class="k">OPENAI_API_KEY</span>:
+    <span class="k">standin</span>: <span class="s">sk-kavach-standin-openai</span>
+    <span class="hl"><span class="k">release_to</span>: [api.openai.com, host.docker.internal]</span>
 <span class="k">evals</span>:
   <span class="k">gate</span>:
     <span class="k">real_pans_at_attacker</span>: <span class="n">0</span>

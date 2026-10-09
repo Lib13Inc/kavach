@@ -19,10 +19,13 @@ nothing, and the refund still succeeds.
 | Gateway policy core: allowlist, token swap, key stand-ins, trace | Tested | `kavach/gateway.py` |
 | mitmproxy add-on (real on-the-wire gateway) | Tested with live HTTP | `kavach/mitm_addon.py` |
 | Refund agent: gullible mock model, Anthropic, OpenAI-compatible (GLM) | Mock tested; real models need your keys | `agent/agent.py` |
-| 10 attack tickets + eval gate (22 pytest checks) | Passing | `services/tickets.json`, `evals/` |
+| 10 attack tickets + eval gate (39 pytest checks) | Passing | `services/tickets.json`, `evals/` |
 | eBPF egress guard (bpftrace): log and kill | Verified on a 6.x kernel | `ebpf/` |
 | Docker Compose stack | Written; run it on your Linux host | `docker-compose.yml` |
 | Trace viewer | Works on any browser | `trace-view/index.html` |
+| Wire log: every request, agent view vs. outbound view, in the demo UI | Tested; run end to end with a local Ollama model | `kavach/wire.py`, `demo/static/index.html` |
+| NVIDIA OpenShell backend: policy compiler, validator, OCSF log parser | Tested live on the homelab (OpenShell 0.1.3): agent in a real sandbox, OCSF events in the wire log; `--mode native` not run live | `kavach/openshell.py`, [docs/openshell.md](docs/openshell.md) |
+| Kyverno-style audit mode, exceptions, lint, PolicyReport | Tested (CEL lint file not run) | `kavach/report.py`, [docs/kyverno.md](docs/kyverno.md) |
 
 ## Quick start (2 minutes, no Docker)
 

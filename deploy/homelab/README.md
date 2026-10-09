@@ -56,3 +56,11 @@ the LAN (port 8088), and on the tailnet through `tailscale serve`.
 - `.env` sets `KAVACH_HTTP_TIMEOUT=300` (local model turns are slow) and `KAVACH_START_DELAY=4`
   so `ebpf/guard.sh` attaches before the contained agent's first `connect()`.
 - The VM's `.env` is never overwritten by `sync.sh`; put an `ANTHROPIC_API_KEY` there to try `--model anthropic`.
+
+## OpenShell on the VM
+
+OpenShell 0.1.3 is installed on the VM (NVIDIA's `install.sh`; Docker compute driver) and `test.sh` runs live checks against it:
+the agent inside a real OpenShell sandbox with the Kavach gateway as its only way out, plus OpenShell's own `ALLOWED` and `DENIED` events.
+Two settings matter: `sudo loginctl enable-linger ubuntu` (the gateway is a systemd user service and stops with your last
+login otherwise), and the Kavach gateway is published on `127.0.0.1:8080`, because OpenShell maps `host.openshell.internal` to the host's loopback.
+The OpenShell gateway needs ~40 s to come up after Docker restarts. See [docs/openshell.md](../../docs/openshell.md).

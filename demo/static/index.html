@@ -65,7 +65,7 @@ header { display: flex; align-items: center; gap: 20px; padding: 12px 24px; bord
 .nav { width: 42px; height: 46px; border-radius: 8px; border: 1px solid var(--line); background: none; cursor: pointer; color: var(--muted); }
 
 /* ---------- stage ---------- */
-.stage { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.stage { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; min-height: 0; }
 .ticket { padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; gap: 16px; align-items: flex-start; }
 .ticket .label { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding-top: 4px; white-space: nowrap; }
 .ticket .text { font-size: 15px; white-space: pre-wrap; margin: 0; max-width: 980px; }
@@ -119,6 +119,44 @@ mark.tok { color: var(--brass); }
 .fact .s { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
 .v.bad { color: var(--signal); } .v.ok { color: var(--pass); } .v.brass { color: var(--brass); }
 
+
+/* ---------- wire log ---------- */
+.tabs { display: flex; gap: 4px; padding: 0 24px; border-bottom: 1px solid var(--line); align-items: center; }
+.tabs button { background: none; border: 0; padding: 10px 14px; color: var(--muted); font: 600 13px/1 var(--display); font-stretch: 110%; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; }
+.tabs button.on { color: var(--brass); border-color: var(--brass); }
+.tabs .count { font: 500 11px var(--mono); color: var(--faint); margin-left: 6px; }
+.tabs .sp { flex: 1; }
+.badge { font: 500 11px/1 var(--mono); padding: 5px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.badge.replay { color: #ffd28a; border-color: #8a6a2a; }
+.badge.live { color: var(--pass); border-color: var(--pass); }
+.wirelog { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); min-height: 0; }
+.wl-list { display: grid; grid-template-rows: auto 1fr; min-height: 0; border-right: 1px solid var(--line); }
+.wl-filters { display: flex; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.wl-filters button { font: 500 12px var(--mono); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--muted); cursor: pointer; }
+.wl-filters button.on { color: var(--brass); border-color: var(--brass); background: var(--brass-soft); }
+.wl-rows { overflow-y: auto; }
+.wl-row { display: grid; grid-template-columns: 62px 74px minmax(0, 1fr) 54px; gap: 8px; align-items: baseline; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 8px 14px; cursor: pointer; font: 12.5px/1.35 var(--mono); color: var(--text); animation: in .2s ease-out; }
+.wl-row:hover { background: var(--panel); } .wl-row.sel { background: var(--panel-2); box-shadow: inset 2px 0 var(--brass); }
+.wl-row .t { color: var(--faint); } .wl-row .u { overflow-wrap: anywhere; } .wl-row .st { color: var(--muted); text-align: right; }
+.chip { font: 600 10.5px/1 var(--mono); letter-spacing: .05em; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; justify-self: start; }
+.chip.allowed { color: var(--pass); background: rgba(143,191,159,.12); }
+.chip.rewritten { color: var(--brass); background: var(--brass-soft); }
+.chip.blocked { color: #ff8a87; background: var(--signal-soft); }
+.chip.audit { color: #ffd28a; background: rgba(255,210,138,.12); }
+.chip.os { color: #9ecbff; background: rgba(120,170,255,.12); }
+.wl-row.os .u { color: #b9d6ff; }
+.wl-detail { overflow-y: auto; padding: 14px 18px 20px; min-height: 0; }
+.wl-detail h4 { margin: 0 0 4px; font: 600 15px var(--mono); overflow-wrap: anywhere; }
+.wl-detail .meta { color: var(--muted); font-size: 13px; margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.wl-detail .rw { font: 12px var(--mono); color: var(--brass); border: 1px solid var(--brass); border-radius: 999px; padding: 2px 8px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.pane { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.pane.changed { border-color: var(--brass); }
+.pane .k { font: 500 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--faint); margin-bottom: 4px; }
+.pane pre { margin: 0; font: 12px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; color: #c9d0da; }
+mark.mask { color: #9ecbff; } mark.real { color: #ff8a87; }
+.wl-empty { color: var(--faint); padding: 18px; }
+
 /* ---------- eval ---------- */
 .evalview { grid-column: 1 / -1; overflow: auto; padding: 18px 24px; }
 .evalview table { border-collapse: collapse; width: 100%; font: 13.5px/1.4 var(--mono); }
@@ -162,10 +200,19 @@ mark.tok { color: var(--brass); }
     </aside>
     <main class="stage">
       <div class="ticket"><div class="label" id="tlabel">Ticket</div><p class="text" id="ttext"></p></div>
+      <div class="tabs" id="tabs">
+        <button data-view="lanes" class="on">Lanes</button>
+        <button data-view="wire">Wire log<span class="count" id="wl-count">0</span></button>
+        <div class="sp"></div><span class="badge" id="os-badge" hidden></span>
+      </div>
       <div class="lanes" id="lanes">
         <section class="lane"><h3>Sandbox <span>what the agent does</span></h3><div class="feed" id="f-sandbox"></div></section>
         <section class="lane kavach" id="lane-kavach"><h3>Kavach <span>gateway + eBPF guard</span></h3><div class="feed" id="f-kavach"></div></section>
         <section class="lane"><h3>Outside <span>what reaches the world</span></h3><div class="feed" id="f-outside"></div></section>
+      </div>
+      <div class="wirelog" id="wirelog" hidden>
+        <div class="wl-list"><div class="wl-filters" id="wl-filters"></div><div class="wl-rows" id="wl-rows"></div></div>
+        <div class="wl-detail" id="wl-detail"><div class="wl-empty">Run a contained step. Every request through the gateway lands here, with what the agent sent next to what left the sandbox.</div></div>
       </div>
       <div class="verdict" id="verdict">
         <div class="card" id="card">
@@ -196,7 +243,8 @@ const shortModel = key => {
   const m = String(MODEL_NAME[key] || key).match(new RegExp(Object.keys(FAMILIES).join("|"), "i"));
   return (m ? FAMILIES[m[0].toLowerCase()] : key) + (key === "crusoe" ? " · Crusoe" : "");
 };
-const available = s => !s.action || s.action.kind === "eval" || (s.action.model || "mock") in MODEL_NAME;
+let CAPS = {};
+const available = s => !s.action || s.action.kind === "eval" || ((s.action.model || "mock") in MODEL_NAME && (s.action.kind !== "openshell" || CAPS.openshell));
 let script = { steps: [] }, tickets = {}, cur = 0, since = 0, runId = 0, running = false, events = [];
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -210,7 +258,7 @@ const md = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(
 function actionLabel(a) {
   if (!a) return ["No run on this step", "talk, then → for the next step"];
   if (a.kind === "eval") return ["Run the eval gate", "kavach eval · 10 attacks, both ways"];
-  const where = a.kind === "contained" ? "inside Kavach" : "uncontained";
+  const where = { contained: "inside Kavach", uncontained: "uncontained", openshell: "in an OpenShell sandbox", "openshell-replay": "on OpenShell (replay)" }[a.kind] || a.kind;
   if (!((a.model || "mock") in MODEL_NAME)) return [`Run ticket ${a.ticket} ${where}`, `model "${a.model}" is not set up on this host`];
   return [`Run ticket ${a.ticket} ${where}`, MODEL_NAME[a.model || "mock"]];
 }
@@ -240,6 +288,71 @@ function showTicket(id) {
 
 function go(i) { cur = Math.max(0, Math.min(script.steps.length - 1, i)); renderStep(); }
 
+
+// ---------------------------------------------------------------- wire log
+const MASK = /\b\d{6}\*{3,}\d{4}\b/g;
+const hlw = s => esc(s).replace(TOK, m => `<mark class="tok">${m}</mark>`).replace(MASK, m => `<mark class="mask">${m}</mark>`)
+  .replace(/\[REAL:\w+\]/g, m => `<mark class="real">${m}</mark>`).replace(PAN, m => `<mark class="pan">${m}</mark>`);
+let wl = [], wlFilter = "all", wlSel = null, view = "lanes";
+const WL_FILTERS = [["all", "All"], ["rewritten", "Rewritten"], ["blocked", "Blocked"], ["os", "OpenShell"]];
+const rowKind = r => r.source === "openshell" ? "os" : r.decision;
+const rel = ts => { const t0 = wl.length ? wl[0].ts : ts; return "+" + (ts - t0).toFixed(2) + "s"; };
+
+function setView(v) {
+  view = v;
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  $("lanes").style.display = v === "lanes" && !document.querySelector(".evalview") ? "" : "none";
+  $("wirelog").hidden = v !== "wire";
+  if (v === "wire") renderWire();
+}
+function addWire(e) {
+  wl.push(e); $("wl-count").textContent = wl.filter(r => r.source === "wire").length;
+  if (e.source === "openshell") {
+    const b = $("os-badge"); b.hidden = false;
+    b.className = "badge " + (e.replayed ? "replay" : "live");
+    b.textContent = e.replayed ? "OpenShell · REPLAYED sample log" : "OpenShell · live";
+  }
+  if (view === "wire") renderWire(true);
+}
+function wlRowHtml(r, i) {
+  const os = r.source === "openshell";
+  const chip = os ? `<span class="chip ${r.verdict === "denied" || r.verdict === "blocked" ? "blocked" : "os"}">${esc(r.cls + ":" + r.act)}</span>`
+                  : `<span class="chip ${r.decision}">${esc(r.decision)}</span>`;
+  const u = os ? (r.dest_host ? `${r.proc ? r.proc.split("/").pop() + " → " : ""}${r.dest_host}:${r.dest_port}${r.verdict ? " · " + r.verdict : ""}` : (r.message || r.raw))
+               : `${r.method} ${r.host}${r.path}`;
+  return `<button class="wl-row ${os ? "os" : ""} ${wlSel === i ? "sel" : ""}" data-i="${i}"><span class="t">${rel(r.ts)}</span>${chip}<span class="u">${hlw(short(u, 140))}</span><span class="st">${os ? esc(r.sev || "") : (r.status ?? "")}</span></button>`;
+}
+function renderWire(keepScroll) {
+  $("wl-filters").innerHTML = WL_FILTERS.map(([k, l]) => `<button data-f="${k}" class="${wlFilter === k ? "on" : ""}">${l}</button>`).join("");
+  $("wl-filters").querySelectorAll("button").forEach(b => b.onclick = () => { wlFilter = b.dataset.f; renderWire(); });
+  const rows = $("wl-rows"), atEnd = rows.scrollTop + rows.clientHeight >= rows.scrollHeight - 30;
+  const shown = wl.map((r, i) => [r, i]).filter(([r]) => wlFilter === "all" || (wlFilter === "rewritten" ? r.decision === "rewritten" : rowKind(r) === wlFilter));
+  rows.innerHTML = shown.length ? shown.map(([r, i]) => wlRowHtml(r, i)).join("") : `<div class="wl-empty">Nothing here yet.</div>`;
+  rows.querySelectorAll(".wl-row").forEach(b => b.onclick = () => { wlSel = +b.dataset.i; renderWire(true); });
+  if (keepScroll && !atEnd) return renderDetail(); rows.scrollTop = rows.scrollHeight; renderDetail();
+}
+function pane(k, body, headers, changed) {
+  const h = headers ? Object.entries(headers).map(([a, b]) => `${a}: ${b}`).join("\n") : "";
+  return `<div class="pane ${changed ? "changed" : ""}"><div class="k">${k}</div><pre>${hlw((h ? h + "\n\n" : "") + (body ?? ""))}</pre></div>`;
+}
+function renderDetail() {
+  const d = $("wl-detail"), r = wl[wlSel] || (() => { const last = [...wl].reverse().find(x => x.source === "wire" && x.decision !== "allowed"); return last; })();
+  if (!r) return;
+  if (r.source === "openshell") {
+    d.innerHTML = `<h4>${esc(r.cls)}:${esc(r.act)} <span class="chip ${r.verdict === "denied" || r.verdict === "blocked" ? "blocked" : "os"}">${esc(r.verdict || r.sev)}</span></h4>
+      <div class="meta">${r.replayed ? "replayed sample, not captured live" : "from the OpenShell supervisor"} · severity ${esc(r.sev)}${r.policy ? " · policy " + esc(r.policy) : ""}${r.reason ? " · " + esc(r.reason) : ""}</div>
+      <div class="pane"><div class="k">OCSF line</div><pre>${esc(r.raw)}</pre></div>`;
+    return;
+  }
+  const a = r.agent_sent, l = r.left_sandbox, changed = (r.rewrites || []).length > 0;
+  d.innerHTML = `<h4>${esc(r.method)} ${esc(r.host)}${esc(r.path)}</h4>
+    <div class="meta"><span class="chip ${r.decision}">${esc(r.decision)}</span> rule <code>${esc(r.rule)}</code> · ${r.status ?? "—"} · ${r.ms ?? "—"} ms
+      ${(r.rewrites || []).map(x => `<span class="rw">${esc(x)}</span>`).join("")}${r.reason ? `<span>${esc(r.reason)}</span>` : ""}</div>
+    <div class="pair">${pane("Agent sent", a.body, a.headers)}${l ? pane("Left the sandbox", l.body, l.headers, changed) : `<div class="pane changed"><div class="k">Left the sandbox</div><pre>Nothing. Blocked at the gateway.</pre></div>`}</div>
+    <div class="pair">${pane("Upstream replied", r.upstream_reply ?? (l ? "(no body)" : "(never sent)"))}${pane("Agent received", r.agent_received ?? "", null, r.upstream_reply && r.agent_received !== r.upstream_reply)}</div>`;
+}
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => setView(b.dataset.view));
+
 // ---------------------------------------------------------------- events -> lanes
 function describe(e) {
   const f = e.file || "", k = e.kind;
@@ -266,6 +379,10 @@ function describe(e) {
     const leak = realPans(e.body).length > 0;
     return ["outside", leak ? "leak" : "", leak ? "Attacker received a real card" : "Attacker received", `${e.channel} ${e.method} ${e.path} · ${short(e.body, 200)}`];
   }
+  if (e.source === "openshell" && (e.verdict === "denied" || e.verdict === "blocked"))
+    return ["kavach", "block", `OpenShell denied ${e.cls}:${e.act}`, e.dest_host ? `${(e.proc || "").split("/").pop()} → ${e.dest_host}:${e.dest_port} · ${e.reason || "no matching policy"}${e.replayed ? " · replayed sample" : ""}` : e.message];
+  if (e.source === "gateway" && k === "egress_audit") return ["kavach", "block", `Audit: ${e.method} ${e.host} would be blocked`, e.detail];
+  if (e.source === "gateway" && k === "policy_exception_used") return ["kavach", "allow", `Exception: ${e.host}`, e.detail];
   if (e.source === "demo" && k === "guard_armed") return ["kavach", "quiet", "eBPF guard armed", "watching the sandbox's connect() calls"];
   return null;
 }
@@ -273,6 +390,7 @@ function describe(e) {
 function addEvent(e) {
   events.push(e);
   if (e.source === "console") { if (running && /Traceback|Error|error:/.test(e.text)) addRaw("sandbox", "leak", "Agent error", e.text); return; }
+  if (e.source === "wire" || e.source === "openshell") addWire(e);
   const d = describe(e); if (!d) return;
   addRaw(...d);
   if (e.source === "agent" && e.kind === "tool_result" && e.tool === "refund") {
@@ -290,7 +408,8 @@ function addRaw(lane, tone, h, d) {
 }
 
 function resetBoard(kind) {
-  events = [];
+  events = []; wl = []; wlSel = null; $("wl-count").textContent = "0"; $("os-badge").hidden = true; $("wl-rows").innerHTML = "";
+  $("wl-detail").innerHTML = `<div class="wl-empty">Waiting for traffic through the gateway…</div>`;
   for (const l of ["sandbox", "kavach", "outside"]) $("f-" + l).innerHTML = "";
   const off = kind === "uncontained";
   $("lane-kavach").classList.toggle("off", off);
@@ -322,8 +441,9 @@ function summarize(run) {
   const keyLeak = att.some(e => /REAL/.test(e.body));
   const refund = events.find(e => e.source === "agent" && e.kind === "tool_result" && e.tool === "refund");
   const seen = events.filter(e => e.source === "agent" && e.kind === "tool_result" && e.tool === "get_ticket").some(e => realPans(e.result).length);
-  const blocked = events.filter(e => e.source === "gateway" && /blocked/.test(e.kind)).length;
+  const blocked = events.filter(e => e.source === "gateway" && /blocked/.test(e.kind)).length + events.filter(e => e.source === "openshell" && (e.verdict === "denied" || e.verdict === "blocked")).length;
   const killed = events.filter(e => e.source === "ebpf").length;
+  const osDenied = events.filter(e => e.source === "openshell" && (e.verdict === "denied" || e.verdict === "blocked")).length;
   const done = run.status === "done";
 
   if (leaked.length) setCard("leaked", `<mark class="pan">${esc(leaked[0])}</mark>`, keyLeak ? "Plus the real API key." : "The full card number, in the clear.");
@@ -359,14 +479,14 @@ async function runStep() {
   if (!r.ok) { $("status").textContent = j.error; return; }
   runId = j.id; since = 0; running = true;
   if (a.kind !== "eval") showTicket(a.ticket || "2");
-  resetBoard(a.kind); renderStep(); poll();
+  resetBoard(a.kind); setView(a.view === "wire" ? "wire" : "lanes"); renderStep(); poll();
 }
 
 async function poll() {
   let j;
   try { j = await (await fetch(`/api/events?since=${since}`)).json(); } catch { setTimeout(poll, 1000); return; }
   const run = j.run;
-  if (run.id !== runId) { runId = run.id; since = 0; if (run.status !== "idle") { resetBoard(run.kind); } return setTimeout(poll, 50); }
+  if (run.id !== runId) { runId = run.id; since = 0; if (run.status !== "idle") { resetBoard(run.kind); setView(view); } return setTimeout(poll, 50); }
   j.events.forEach(addEvent); since += j.events.length;
   running = run.status === "running";
   const secs = run.started ? Math.round(((run.ended || Date.now() / 1000) - run.started)) : 0;
@@ -381,6 +501,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") go(cur + 1);
   else if (e.key === "ArrowLeft") go(cur - 1);
   else if (e.key === "Enter") runStep();
+  else if (e.key.toLowerCase() === "l") setView(view === "wire" ? "lanes" : "wire");
   else if (e.key.toLowerCase() === "n") document.body.classList.toggle("hide-notes");
 });
 $("prev").onclick = () => go(cur - 1); $("next").onclick = () => go(cur + 1); $("run").onclick = runStep;
@@ -389,10 +510,10 @@ $("prev").onclick = () => go(cur - 1); $("next").onclick = () => go(cur + 1); $(
   [script] = await Promise.all([fetch("/api/script").then(r => r.json()),
     fetch("/api/tickets").then(r => r.json()).then(ts => ts.forEach(t => tickets[t.id] = t))]);
   $("title").textContent = script.title;
-  MODEL_NAME = script.models || MODEL_NAME;
+  MODEL_NAME = script.models || MODEL_NAME; CAPS = script.capabilities || {};
   $("steps").innerHTML = script.steps.map((s, i) => {
     const a = s.action, m = a?.model && a.model !== "mock" ? " · " + shortModel(a.model) : "";
-    const tag = !a ? "" : !available(s) ? "n/a here" : a.kind === "eval" ? "eval" : (a.kind === "contained" ? "kavach" : "open") + m;
+    const tag = !a ? "" : !available(s) ? "n/a here" : a.kind === "eval" ? "eval" : ({ contained: "kavach", openshell: "openshell", "openshell-replay": "openshell · replay" }[a.kind] || "open") + m;
     return `<li class="${available(s) ? "" : "na"}"><button data-i="${i}">${esc(s.title)}<span class="tag">${tag}</span></button></li>`;
   }).join("");
   $("steps").querySelectorAll("button").forEach(b => b.onclick = () => go(+b.dataset.i));

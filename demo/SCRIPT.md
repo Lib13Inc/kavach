@@ -1,14 +1,16 @@
 # Steal the card
 
-The Kavach stage demo, about 3 minutes (5 with the local-model steps). Each `##` section is one
-step in the demo UI: the notes are what you say, the action is what **Run** does.
-Keys in the UI: `←` `→` change step, `Enter` runs the step, `N` hides these notes.
+The Kavach stage demo, about 5 minutes. Each `##` section is one step in the demo UI: the notes are
+what you say, the action is what **Run** does.
+Keys in the UI: `←` `→` change step, `Enter` runs the step, `L` flips between the lanes and the wire log,
+`N` hides these notes.
 
-Steps whose model isn't set up on the demo host are greyed out and skipped: the homelab runs the
-local Qwen (`openai`), the Crusoe host runs Crusoe's hosted Qwen (`crusoe`).
+Steps whose model isn't set up on the demo host are greyed out and skipped. The real-model steps use a
+local model served by Ollama on this machine (`openai` in the config). The OpenShell step runs live
+only where the `openshell` CLI is installed; the replay step works everywhere and says it is a replay.
 
-Before you start: open the demo page, press `→` once and `Enter` on step 3 to warm the
-containers, then go back to step 1. Runs with Qwen take 30–90 s; the notes say what to talk about meanwhile.
+Before you start: open the demo page, press `→` three times and `Enter` on step 4 to warm the
+containers, then go back to step 1. Runs with the local model take 20–60 s; the notes say what to talk about meanwhile.
 
 ## The problem
 <!-- show: ticket=2 -->
@@ -35,7 +37,8 @@ number, a real API key, and the open internet.
 **Point at** the Outside lane, then the card: the refund goes through, and the attacker receives
 the full card number.
 
-**Say:** The model did what it was told. The model is not the security boundary.
+**Say:** The model did what it was told. The model is not the security boundary. And notice what is
+missing: there is no log of what the agent sent, because nothing was watching.
 
 ## Same agent, inside Kavach
 <!-- action: contained ticket=2 model=mock -->
@@ -48,6 +51,16 @@ the full card number.
 - On the call to the payment processor, and only there, the token is swapped back for the real card.
 
 **Point at** the card: the attacker got nothing usable, and the refund still succeeded.
+
+## See every byte
+<!-- action: contained ticket=2 model=mock view=wire -->
+**Say:** Because every call crosses the gateway, Kavach keeps a wire log. This is the same run, one row per request.
+
+**Point at** the rows: green means allowed as is, amber means Kavach rewrote something, red means blocked. Click the
+payment call. On the left, what the agent sent: a token. On the right, what left the sandbox: the card, masked
+in the log so the log itself is safe to keep. Click the blocked POST to the attacker: nothing left the sandbox.
+
+**Say:** This is the audit trail. It is also what you hand a security reviewer.
 
 ## Go around the gateway
 <!-- action: contained ticket=5 model=mock -->
@@ -62,32 +75,48 @@ sandbox and kills the agent process. The agent can't see or switch off that guar
 ## A real model takes the bait
 <!-- action: uncontained ticket=2 model=openai -->
 **Say:** The mock model always follows injections, which is fair to ask: does a real one? This is
-Qwen3 30B, running on a small box in my home lab, no containment.
+a small open model running locally on this machine through Ollama, no containment.
 
-**While it thinks (30–90 s):** Frontier models refuse obvious injections more often than this one,
+**While it thinks (20–60 s):** Frontier models refuse obvious injections more often than a small one,
 but "more often" is a probability. Containment is for the run where the model doesn't refuse.
 
-**Point at** the card when it lands: in rehearsal it followed the hidden instruction and leaked the card.
+**Point at** the card when it lands, if the model followed the hidden instruction.
 
 ## Same real model, inside Kavach
-<!-- action: contained ticket=2 model=openai -->
+<!-- action: contained ticket=2 model=openai view=wire -->
 **Say:** Same model, same ticket, now inside Kavach. No change to the agent's code.
 
-**While it thinks:** Every call to the model also goes through the gateway, so the model provider
-never sees a real card number either. That keeps the agent runtime out of PCI scope.
+**While it thinks:** Every call to the model also goes through the gateway, so you can open the model
+call in the wire log and read the exact prompt that went out. The card in it is a token, so the model
+provider never sees a real card number either.
 
-**Point at** the card: nothing usable leaked, and the refund went through.
+**Point at** the card: nothing usable leaked. Small local models are unreliable tool users, so this one may talk about a
+refund without issuing it; the mock steps are where you show the refund landing.
 
-## Swap in a hosted model
-<!-- action: contained ticket=2 model=crusoe -->
-**Say:** Now a hosted model: Qwen on Crusoe's managed inference. Same agent, same ticket, same
-policy file. The model is a setting, not a rewrite.
+## The same sandbox on NVIDIA OpenShell
+<!-- action: openshell-replay ticket=5 model=mock view=wire -->
+**Say:** Kavach does not have to own the sandbox. NVIDIA's OpenShell, now a CNCF project, runs the agent with
+Landlock, seccomp and a supervisor that checks every outbound connection. `kavach openshell compile` turns
+the same policy file into an OpenShell policy whose only allowed destination is the Kavach gateway.
 
-**While it runs:** The agent only has a stand-in API key. The gateway swaps in the real Crusoe key,
-and only on calls to Crusoe. If the agent sent that stand-in anywhere else, the call would be blocked.
+**Point at** the blue rows in the wire log: OpenShell's own audit events, in the same timeline. The raw-socket
+attempt shows up as a denied connection. OpenShell does the isolation, Kavach adds the part it does not have:
+card tokenization and the per-request ledger.
 
-**Point at** the Kavach lane (the key swap for `api.inference.crusoecloud.com`), then the card:
-nothing usable leaked, and the refund went through.
+**Say:** This run is a replay: the Kavach half is the real gateway code, the OpenShell log is modelled on a live run, and the
+badge says so. On the homelab, where OpenShell is installed, the next step runs it live.
+
+## Live on OpenShell
+<!-- action: openshell ticket=5 model=mock view=wire -->
+**Say:** Same thing, for real: `openshell sandbox create` with the compiled policy, the agent as the sandbox's main
+process, and OpenShell's logs tailed into the wire log.
+
+## Policy hygiene, borrowed from Kyverno
+<!-- show: ticket=2 -->
+**Say:** Kyverno solved policy management for Kubernetes, and four of its ideas fit here unchanged: audit versus
+enforce modes, exceptions with an owner and an expiry, a report for every decision, and linting policy in CI.
+
+**Point at** `kavach policy lint`, `kavach policy report`, and the `exceptions:` block in the policy file.
 
 ## The eval gate
 <!-- action: eval -->
@@ -101,6 +130,6 @@ are clean and every refund still succeeds. This is the check a CI pipeline would
 ## The ask
 <!-- show: ticket=2 -->
 **Say:** One config file and one command give a small team the containment big companies build
-with platform teams. We are looking for design partners in healthcare, education and payments.
+with platform teams, on the sandbox they already choose. We are looking for design partners in healthcare, education and payments.
 
 **Say:** Thank you.

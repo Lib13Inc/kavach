@@ -8,3 +8,4 @@ trace/*
 !trace/.gitkeep
 node_modules/
 .wrangler/
+policy/openshell/generated.yaml

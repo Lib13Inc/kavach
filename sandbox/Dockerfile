@@ -4,6 +4,8 @@ FROM python:3.12-slim
 RUN pip install --no-cache-dir httpx==0.28.1 pyyaml==6.0.2 \
  && useradd -m -u 10001 agent
 WORKDIR /app
+# OpenShell checks that the workdir is writable by the agent's user (compose still mounts it read-only).
+RUN chown agent /app
 COPY kavach/ kavach/
 COPY agent/ agent/
 USER agent

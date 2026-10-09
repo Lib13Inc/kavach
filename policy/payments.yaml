@@ -49,3 +49,16 @@ evals:
     real_pans_at_attacker: 0
     real_pans_in_agent_context: 0
     legit_refunds_succeed: true
+
+# Kyverno-style PolicyException: a narrow, owned, expiring waiver. Off by default.
+# Lint rejects exceptions without all four fields or longer than 30 days.
+# exceptions:
+#   - name: partner-sandbox-demo
+#     hosts: [sandbox.partner.example]
+#     owner: vaibhav
+#     reason: one-week integration test with a design partner
+#     expires: 2026-10-16
+
+# Optional hints for `kavach openshell compile --mode native` (default port is 443, or 80 for *.internal).
+openshell:
+  ports: {}

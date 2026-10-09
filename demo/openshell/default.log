@@ -1,0 +1,6 @@
+# REPLAY FIXTURE: modelled on a live OpenShell 0.1.3 run (lines shaped exactly like `openshell logs` output) but
+# not a capture of the run you are watching. Every event it produces is flagged replayed=true.
+OCSF CONFIG:LOADED [INFO] Acknowledged initial policy revision as loaded [version:2] [hash:1ba8420198ba6e36dc2ff1c1de5a604113cfe0ac36e02b2eb531794a4c6907e0]
+OCSF NET:OPEN [INFO] ALLOWED /usr/local/bin/python3.12(0) -> host.openshell.internal:8080 [policy:kavach_gateway engine:opa]
+OCSF NET:OPEN [INFO] ALLOWED /usr/local/bin/python3.12(0) -> host.openshell.internal:8080 [policy:kavach_gateway engine:opa]
+OCSF NET:OPEN [INFO] ALLOWED /usr/local/bin/python3.12(0) -> host.openshell.internal:8080 [policy:kavach_gateway engine:opa]

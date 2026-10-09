@@ -19,9 +19,7 @@ DOC_URL = "https://claude.ai/artifact/BSX9u1fwmS66CQSKqMwTku"
 REPO_URL = "https://github.com/Lib13Inc/kavach"
 # The live stage demos, served by `tailscale serve`; only reachable from devices on the tailnet.
 #   homelab: VM on minipve, local Qwen on minipve2 (deploy/homelab/tailscale.sh)
-#   crusoe:  Crusoe Cloud VM, Crusoe's hosted Qwen (deploy/crusoe/tailscale.sh)
 DEMO_URL = "https://kavach-demo.bettong-beta.ts.net/"
-CRUSOE_DEMO_URL = "https://kavach-crusoe.bettong-beta.ts.net/"
 # Hackathon deck, hand-written in web/slides/index.html (not generated).
 SLIDES_URL = "slides/"
 
@@ -54,7 +52,7 @@ def render(md_text: str) -> tuple[str, str, str]:
 def main() -> None:
     title, toc, content = render(SPEC.read_text(encoding="utf-8"))
     page = TEMPLATE.format(title=html.escape(title), toc=toc, content=content,
-                           doc_url=DOC_URL, repo_url=REPO_URL, demo_url=DEMO_URL, crusoe_demo_url=CRUSOE_DEMO_URL,
+                           doc_url=DOC_URL, repo_url=REPO_URL, demo_url=DEMO_URL,
                            slides_url=SLIDES_URL)
     OUT.write_text(page, encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)} ({len(page):,} bytes)")
@@ -153,7 +151,6 @@ footer .inner {{ max-width: 1120px; margin: 0 auto; padding: 24px 16px; display:
       <a class="btn" href="{doc_url}" rel="noopener">Open the live doc</a>
       <a class="btn" href="/matrix/">Model matrix: which models fall for which attacks</a>
       <a class="btn demo" href="{demo_url}" rel="noopener">Live demo: home lab <span>local Qwen · tailnet only</span></a>
-      <a class="btn demo" href="{crusoe_demo_url}" rel="noopener">Live demo: Crusoe Cloud <span>hosted Qwen · tailnet only</span></a>
     </div>
   </div>
 </header>

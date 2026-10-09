@@ -6,3 +6,6 @@ services:
       KAVACH_POLICY: /kavach/homelab-policy/payments-homelab.yaml
     volumes:
       - ./deploy/homelab/policy:/kavach/homelab-policy:ro
+    # For the OpenShell backend: OpenShell maps host.openshell.internal to the host's loopback, so publish there
+    # (never the LAN).
+    ports: ["127.0.0.1:8080:8080"]

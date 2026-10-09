@@ -9,7 +9,8 @@ ENFORCE=1; [[ "${1:-}" == "--log-only" ]] && ENFORCE=0
 
 echo "waiting for the contained agent container..."
 for _ in $(seq 1 60); do
-  CID=$(docker ps -q --filter "label=com.docker.compose.service=agent" | head -1)
+  # OpenShell sandboxes built from the same image carry the same compose label; they are not ours to guard.
+  CID=$(docker ps --filter "label=com.docker.compose.service=agent" --format '{{.ID}} {{.Names}}' | grep -v ' openshell-' | awk '{print $1}' | head -1 || true)
   [[ -n "$CID" ]] && break; sleep 0.5
 done
 [[ -z "${CID:-}" ]] && { echo "no agent container running"; exit 1; }

@@ -1,0 +1,51 @@
+# Kyverno ValidatingPolicy (JSON mode) that lints a Kavach policy pack.
+#
+#   kyverno json scan --policy policy/lint/kavach-pack.kyverno.yaml --payload policy/payments.yaml
+#
+# Same rules as `kavach policy lint` (kavach/report.py), written in CEL so a platform team that
+# already runs Kyverno can gate packs in the same pipeline. NOT RUN YET: the Kyverno CLI is not
+# installed on the dev machine, and JSON-mode flags move between releases. `kavach policy lint`
+# is the tested path; this file is the portable statement of the same rules.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: kavach-pack-hygiene
+spec:
+  evaluation:
+    mode: JSON
+  validationActions: [Deny]
+  matchConditions:
+    - name: is-kavach-pack
+      expression: has(object.pack) && has(object.egress)
+  validations:
+    - message: "egress.allow_hosts must list hosts exactly: no wildcards"
+      expression: object.egress.allow_hosts.all(h, !h.contains('*'))
+    - message: "every secret needs a stand-in prefixed sk-kavach-standin- and at least one release_to host"
+      expression: >-
+        !has(object.secrets) ||
+        object.secrets.all(k, object.secrets[k].standin.startsWith('sk-kavach-standin-') &&
+                              size(object.secrets[k].release_to) > 0)
+    - message: "secrets may only be released to hosts that egress allows"
+      expression: >-
+        !has(object.secrets) ||
+        object.secrets.all(k, object.secrets[k].release_to.all(h, h in object.egress.allow_hosts))
+    - message: "every exception needs an owner, a reason, an expiry and hosts"
+      expression: >-
+        !has(object.exceptions) ||
+        object.exceptions.all(e, has(e.owner) && has(e.reason) && has(e.expires) && has(e.hosts))
+---
+# Audit-only: surfaces in the report without failing the scan.
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: kavach-pack-enforce-mode
+spec:
+  evaluation:
+    mode: JSON
+  validationActions: [Audit]
+  matchConditions:
+    - name: is-kavach-pack
+      expression: has(object.pack) && has(object.egress)
+  validations:
+    - message: "egress.mode is audit: violations are logged but let through"
+      expression: "!has(object.egress.mode) || object.egress.mode == 'enforce'"

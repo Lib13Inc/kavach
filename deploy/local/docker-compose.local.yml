@@ -1,0 +1,10 @@
+# Local override: Ollama on this machine as the model, and the gateway reachable from the host
+# (port 8080) so an OpenShell sandbox can use it as its only way out.
+#   COMPOSE_FILE=docker-compose.yml:deploy/local/docker-compose.local.yml docker compose up -d gateway tickets payments attacker
+services:
+  gateway:
+    ports: ["8080:8080"]
+    environment:
+      KAVACH_POLICY: /kavach/local-policy/payments-local.yaml
+    volumes:
+      - ./deploy/local/policy:/kavach/local-policy:ro
